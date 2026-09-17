@@ -1,0 +1,23 @@
+# Local development convenience only — not required for production.
+# Brings up a Postgres database so you don't need to install one locally.
+# Run: docker compose up -d db
+# Then run the app itself with `npm run dev` (outside Docker, for fast
+# refresh) pointed at DATABASE_URL below.
+
+version: "3.9"
+
+services:
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: oyeshadoww
+      POSTGRES_PASSWORD: oyeshadoww
+      POSTGRES_DB: oyeshadoww_store
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+volumes:
+  pgdata:

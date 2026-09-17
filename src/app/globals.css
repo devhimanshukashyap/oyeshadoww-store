@@ -1,0 +1,141 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --font-display: "Space Grotesk", sans-serif;
+    --font-body: "Inter", sans-serif;
+  }
+
+  html {
+    scroll-behavior: smooth;
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  body {
+    @apply bg-base text-ink antialiased;
+    line-height: 1.55;
+  }
+
+  ::selection {
+    @apply bg-accent/30 text-ink;
+  }
+
+  /* --------------------------------------------------------------------
+     Typography system
+     ---------------------------------------------------------------------
+     Centralized heading styling: font family, tracking, and line-height
+     are set once here for every h1–h4 in the app, rather than repeated
+     per component. Components still control size/weight/color via
+     Tailwind utilities (e.g. `text-3xl font-semibold`) as needed — this
+     layer only fixes the parts that should never vary: which typeface a
+     heading uses, and how tightly it's set. See also the `.text-hero`,
+     `.text-display-*`, and `.text-eyebrow` utilities below for the
+     fluid, responsive end of the scale (hero/section titles).
+     -------------------------------------------------------------------- */
+  h1,
+  h2,
+  h3,
+  h4 {
+    @apply font-display;
+    letter-spacing: -0.02em;
+    line-height: 1.15;
+  }
+
+  h5,
+  h6 {
+    @apply font-sans font-semibold;
+    line-height: 1.3;
+  }
+
+  /* Visible, high-contrast keyboard focus everywhere — never rely on color alone. */
+  :focus-visible {
+    outline: 2px solid #7c5cff;
+    outline-offset: 2px;
+    border-radius: 4px;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
+}
+
+@layer components {
+  .container-page {
+    @apply mx-auto w-full max-w-6xl px-4 sm:px-6 lg:px-8;
+  }
+
+  .btn {
+    @apply inline-flex items-center justify-center gap-2 rounded-pill px-5 py-3 text-sm font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-50;
+    min-height: 44px;
+  }
+
+  .btn-primary {
+    @apply btn bg-accent text-white hover:bg-accent-hover;
+  }
+
+  .btn-secondary {
+    @apply btn bg-surface-raised text-ink border border-border hover:border-accent/50;
+  }
+
+  .btn-ghost {
+    @apply btn bg-transparent text-ink hover:bg-surface-raised;
+  }
+
+  .card {
+    @apply rounded-card border border-border bg-surface shadow-panel;
+  }
+
+  .input {
+    @apply w-full rounded-lg border border-border bg-surface-raised px-4 py-3 text-sm text-ink placeholder:text-ink-faint focus:border-accent;
+    min-height: 44px;
+  }
+
+  .label {
+    @apply mb-1.5 block text-sm font-medium text-ink-muted;
+  }
+
+  .skeleton {
+    @apply animate-pulse rounded-md bg-surface-raised;
+  }
+
+  /* --------------------------------------------------------------------
+     Fluid type scale — the sizes that should scale smoothly with the
+     viewport instead of jumping at breakpoints (hero + top-level section
+     titles). Using clamp() here means a phone never renders an
+     oversized heading and a large desktop never looks under-scaled,
+     without needing separate sm:/md:/lg: overrides everywhere this is
+     used.
+     -------------------------------------------------------------------- */
+  .text-hero {
+    @apply font-display font-semibold text-ink;
+    font-size: clamp(2rem, 1.5rem + 3vw, 3.5rem);
+    line-height: 1.08;
+    letter-spacing: -0.025em;
+  }
+
+  .text-display-lg {
+    @apply font-display font-semibold text-ink;
+    font-size: clamp(1.5rem, 1.2rem + 1.5vw, 2.25rem);
+  }
+
+  .text-display-md {
+    @apply font-display font-semibold text-ink;
+    font-size: clamp(1.25rem, 1.1rem + 0.8vw, 1.5rem);
+  }
+
+  .text-eyebrow {
+    @apply font-sans text-xs font-medium uppercase text-accent;
+    letter-spacing: 0.08em;
+  }
+}

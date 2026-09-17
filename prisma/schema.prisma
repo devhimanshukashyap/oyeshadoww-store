@@ -1,0 +1,415 @@
+// ============================================================================
+// oyeshadoww-store — Prisma schema
+//
+// Design principles (see /docs/ARCHITECTURE.md for full rationale):
+// 1. Ownership must always be derivable from the DB alone: User -> Purchase
+//    -> Product/Reel. Nothing about access is inferred from the client.
+// 2. Money and product identity always flow server -> Razorpay -> server.
+//    OrderItem snapshots the price actually charged so historical orders
+//    never change even if the admin edits prices later.
+// 3. WebhookEvent gives us a hard idempotency key so a replayed or
+//    duplicated Razorpay webhook can never grant duplicate access.
+// 4. Soft deletion (deletedAt) is used for Products/Reels so that old
+//    orders and purchases always keep their historical reference.
+// ============================================================================
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ----------------------------------------------------------------------------
+// Users & Auth
+// ----------------------------------------------------------------------------
+
+enum Role {
+  CUSTOMER
+  ADMIN
+}
+
+model User {
+  id           String   @id @default(cuid())
+  name         String?
+  email        String   @unique
+  passwordHash String
+  role         Role     @default(CUSTOMER)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  // Simple, self-contained failed-login tracking for brute-force protection.
+  // No external session store required.
+  failedLoginCount   Int       @default(0)
+  lockedUntil        DateTime?
+  lastLoginAt        DateTime?
+
+  orders         Order[]
+  purchases      Purchase[]
+  downloadLogs   DownloadLog[]
+  batchJobs      BatchDownloadJob[]
+  auditLogs      AdminAuditLog[]
+  passwordResets PasswordResetToken[]
+
+  @@index([email])
+}
+
+model PasswordResetToken {
+  id        String   @id @default(cuid())
+  userId    String
+  tokenHash String   @unique
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+// ----------------------------------------------------------------------------
+// Catalog
+// ----------------------------------------------------------------------------
+
+enum ProductType {
+  BUNDLE // a collection of reels (current core product)
+  DIGITAL_DOWNLOAD // a single downloadable asset (future use)
+  COURSE // future: structured lessons, not implemented in v1 UI
+}
+
+enum ProductStatus {
+  DRAFT
+  PUBLISHED
+  ARCHIVED
+}
+
+model Category {
+  id        String    @id @default(cuid())
+  name      String
+  slug      String    @unique
+  sortOrder Int       @default(0)
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  products Product[]
+
+  @@index([slug])
+}
+
+/// A purchasable Product ("Bundle"). Prices live here, in the DB — never
+/// hardcoded in the frontend or trusted from client requests.
+model Product {
+  id    String @id @default(cuid())
+  type  ProductType @default(BUNDLE)
+  name  String
+  slug  String @unique
+
+  categoryId String?
+  category   Category? @relation(fields: [categoryId], references: [id])
+
+  description      String  @db.Text
+  shortDescription String?
+
+  thumbnailKey    String? // R2 object key (private) rendered via internal image proxy or public-safe cache
+  previewVideoKey String? // low-res / watermarked teaser clip, safe to preview
+
+  // Prices are stored in the smallest currency unit (paise for INR) to avoid
+  // float rounding bugs. 4900 = ₹49.00
+  watermarkedPriceInPaise Int?
+  cleanPriceInPaise       Int?
+  currency                String @default("INR")
+
+  status      ProductStatus @default(DRAFT)
+  featured    Boolean       @default(false)
+  purchasable Boolean       @default(true)
+  sortOrder   Int           @default(0)
+
+  seoTitle       String?
+  seoDescription String?
+
+  licenseText String? @db.Text // editable per-product override of the default license
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime? // soft delete — historical orders keep referencing this row
+
+  reels      Reel[]
+  orderItems OrderItem[]
+  purchases  Purchase[]
+
+  @@index([slug])
+  @@index([status, deletedAt])
+  @@index([categoryId])
+}
+
+enum Visibility {
+  VISIBLE
+  HIDDEN
+}
+
+/// One reel inside a bundle. Each reel may have a watermarked file and/or a
+/// clean (non-watermarked) file — each stored as its own StorageObject.
+model Reel {
+  id        String @id @default(cuid())
+  productId String
+  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  title       String
+  description String?
+  sortOrder   Int     @default(0)
+  visibility  Visibility @default(VISIBLE)
+
+  thumbnailKey String?
+  durationSec  Int?
+
+  watermarkedObjectId String?        @unique
+  watermarkedObject   StorageObject? @relation("WatermarkedReel", fields: [watermarkedObjectId], references: [id])
+
+  cleanObjectId String?        @unique
+  cleanObject   StorageObject? @relation("CleanReel", fields: [cleanObjectId], references: [id])
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  downloadLogs DownloadLog[]
+
+  @@index([productId, sortOrder])
+}
+
+enum StorageObjectStatus {
+  UPLOADING
+  READY
+  FAILED
+  ORPHANED // upload succeeded in R2 but was never attached to a Reel — safe to garbage-collect
+}
+
+/// Registry of every object actually stored in R2. Keeping this separate
+/// from Reel lets us detect orphaned uploads (DB row created, storage
+/// write failed, or vice versa) and clean them up safely.
+model StorageObject {
+  id          String              @id @default(cuid())
+  bucket      String
+  key         String              @unique
+  contentType String?
+  sizeBytes   BigInt?
+  checksum    String?
+  status      StorageObjectStatus @default(UPLOADING)
+  createdAt   DateTime            @default(now())
+  updatedAt   DateTime            @updatedAt
+
+  watermarkedOf Reel? @relation("WatermarkedReel")
+  cleanOf       Reel? @relation("CleanReel")
+
+  @@index([status])
+}
+
+// ----------------------------------------------------------------------------
+// Orders & Payments
+// ----------------------------------------------------------------------------
+
+enum OrderStatus {
+  CREATED // Razorpay order created, checkout not yet completed
+  PENDING // payment initiated, awaiting verification/webhook
+  PAID
+  FAILED
+  REFUNDED
+  CANCELLED
+}
+
+enum Variant {
+  WATERMARKED
+  CLEAN
+}
+
+/// One checkout attempt. Maps 1:1 to a Razorpay order.
+model Order {
+  id     String      @id @default(cuid())
+  userId String
+  user   User        @relation(fields: [userId], references: [id])
+  status OrderStatus @default(CREATED)
+
+  currency        String @default("INR")
+  totalAmountPaise Int   // authoritative amount, computed server-side from DB prices
+
+  razorpayOrderId   String? @unique
+  razorpayPaymentId String? @unique
+  razorpaySignature String?
+
+  failureReason String?
+
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+  paidAt     DateTime?
+  failedAt   DateTime?
+  refundedAt DateTime?
+
+  items      OrderItem[]
+  purchases  Purchase[]
+
+  @@index([userId])
+  @@index([razorpayOrderId])
+  @@index([status])
+}
+
+/// Snapshot of exactly what was purchased and at what price, so later
+/// price changes in the admin panel never rewrite history.
+model OrderItem {
+  id      String @id @default(cuid())
+  orderId String
+  order   Order  @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  productId String
+  product   Product @relation(fields: [productId], references: [id])
+
+  variant       Variant
+  unitPricePaise Int
+  productNameSnapshot String
+
+  @@index([orderId])
+  @@index([productId])
+}
+
+enum PurchaseStatus {
+  ACTIVE
+  REVOKED
+  REFUNDED
+}
+
+/// The entitlement record: "this user may download this product at this
+/// variant." This is the ONLY table download endpoints are allowed to
+/// trust for access control.
+model Purchase {
+  id        String         @id @default(cuid())
+  userId    String
+  user      User           @relation(fields: [userId], references: [id])
+  productId String
+  product   Product        @relation(fields: [productId], references: [id])
+  orderId   String
+  order     Order          @relation(fields: [orderId], references: [id])
+  variant   Variant
+  status    PurchaseStatus @default(ACTIVE)
+
+  grantedAt DateTime  @default(now())
+  revokedAt DateTime?
+
+  @@unique([userId, productId, variant])
+  @@index([userId])
+  @@index([productId])
+}
+
+// ----------------------------------------------------------------------------
+// Webhook idempotency
+// ----------------------------------------------------------------------------
+
+enum WebhookStatus {
+  RECEIVED
+  PROCESSED
+  IGNORED
+  FAILED
+}
+
+/// Every inbound Razorpay webhook is recorded by its unique event id BEFORE
+/// processing. This is what makes replay / duplicate delivery safe.
+model WebhookEvent {
+  id          String        @id @default(cuid())
+  provider    String        @default("razorpay")
+  eventId     String        @unique // Razorpay's x-razorpay-event-id (or payment/order id fallback)
+  type        String
+  payload     Json
+  status      WebhookStatus @default(RECEIVED)
+  error       String?
+  receivedAt  DateTime      @default(now())
+  processedAt DateTime?
+
+  @@index([type])
+  @@index([status])
+}
+
+// ----------------------------------------------------------------------------
+// Downloads
+// ----------------------------------------------------------------------------
+
+enum DownloadAction {
+  SINGLE
+  BATCH
+}
+
+model DownloadLog {
+  id        String         @id @default(cuid())
+  userId    String
+  user      User           @relation(fields: [userId], references: [id])
+  productId String
+  reelId    String?
+  reel      Reel?          @relation(fields: [reelId], references: [id])
+  variant   Variant
+  action    DownloadAction
+  success   Boolean
+  reason    String? // failure reason, e.g. "NOT_OWNED", "EXPIRED", "RATE_LIMITED"
+  ip        String?
+  userAgent String?
+  createdAt DateTime       @default(now())
+
+  @@index([userId, createdAt])
+  @@index([reelId])
+}
+
+enum BatchJobStatus {
+  PENDING
+  PROCESSING
+  READY
+  FAILED
+  EXPIRED
+}
+
+/// A requested multi-reel ZIP. Processed out-of-band so the HTTP request
+/// that creates it returns immediately; the client polls status.
+model BatchDownloadJob {
+  id        String         @id @default(cuid())
+  userId    String
+  user      User           @relation(fields: [userId], references: [id])
+  productId String
+  reelIds   Json // string[] of Reel ids validated at creation time
+  variant   Variant
+  status    BatchJobStatus @default(PENDING)
+
+  archiveKey String? // R2 key of the generated temp ZIP (private, short TTL)
+  sizeBytes  BigInt?
+  error      String?
+
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+  expiresAt  DateTime?
+
+  @@index([userId, createdAt])
+  @@index([status])
+}
+
+// ----------------------------------------------------------------------------
+// Site configuration & admin
+// ----------------------------------------------------------------------------
+
+/// Simple typed key-value settings store, so branding/social links/legal
+/// text/currency etc. are editable from /admin/settings without code
+/// changes or redeploys. See lib/settings.ts for the typed accessor.
+model SiteSetting {
+  key       String   @id
+  value     Json
+  updatedAt DateTime @updatedAt
+}
+
+model AdminAuditLog {
+  id        String   @id @default(cuid())
+  adminId   String
+  admin     User     @relation(fields: [adminId], references: [id])
+  action    String
+  targetType String?
+  targetId   String?
+  metadata   Json?
+  createdAt  DateTime @default(now())
+
+  @@index([adminId, createdAt])
+}

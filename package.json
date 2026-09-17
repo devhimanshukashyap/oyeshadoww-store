@@ -1,0 +1,63 @@
+{
+  "name": "oyeshadoww-store",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Production digital-product storefront for @oyeshadoww — AI reel bundles with secure Razorpay payments and private Cloudflare R2 delivery.",
+  "scripts": {
+    "dev": "next dev",
+    "build": "prisma generate && next build",
+    "start": "next start",
+    "lint": "next lint",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "prisma:generate": "prisma generate",
+    "prisma:migrate": "prisma migrate deploy",
+    "prisma:migrate:dev": "prisma migrate dev",
+    "prisma:studio": "prisma studio",
+    "seed": "tsx prisma/seed.ts",
+    "cleanup:archives": "tsx scripts/cleanup-archives.ts",
+    "postinstall": "prisma generate"
+  },
+  "dependencies": {
+    "@aws-sdk/client-s3": "^3.645.0",
+    "@aws-sdk/lib-storage": "^3.645.0",
+    "@aws-sdk/s3-request-presigner": "^3.645.0",
+    "@next-auth/prisma-adapter": "^1.0.7",
+    "@prisma/client": "^5.19.1",
+    "archiver": "^7.0.1",
+    "bcryptjs": "^2.4.3",
+    "clsx": "^2.1.1",
+    "lucide-react": "^0.441.0",
+    "nanoid": "^5.0.7",
+    "next": "14.2.35",
+    "next-auth": "^4.24.7",
+    "razorpay": "^2.9.4",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "react-dropzone": "^14.2.3",
+    "resend": "^4.0.0",
+    "sharp": "^0.33.5",
+    "tailwind-merge": "^2.5.2",
+    "zod": "^3.23.8"
+  },
+  "devDependencies": {
+    "@types/archiver": "^6.0.2",
+    "@types/bcryptjs": "^2.4.6",
+    "@types/node": "^20.14.15",
+    "@types/react": "^18.3.5",
+    "@types/react-dom": "^18.3.0",
+    "autoprefixer": "^10.4.20",
+    "eslint": "^8.57.0",
+    "eslint-config-next": "14.2.35",
+    "postcss": "^8.4.45",
+    "prisma": "^5.19.1",
+    "tailwindcss": "^3.4.10",
+    "tsx": "^4.19.0",
+    "typescript": "^5.5.4",
+    "vitest": "^2.0.5"
+  },
+  "engines": {
+    "node": ">=18.18.0"
+  }
+}
