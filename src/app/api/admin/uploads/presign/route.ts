@@ -28,7 +28,10 @@ export async function POST(req: NextRequest) {
     await requireAdmin();
     const body = uploadUrlRequestSchema.parse(await req.json());
 
-    const isVideo = body.kind === "reel-watermarked" || body.kind === "reel-clean";
+    const isVideo =
+      body.kind === "reel-watermarked" ||
+      body.kind === "reel-clean" ||
+      body.kind === "preview";
     const allowed = isVideo ? ALLOWED_VIDEO_TYPES : ALLOWED_IMAGE_TYPES;
     const maxBytes = isVideo ? MAX_VIDEO_BYTES : MAX_IMAGE_BYTES;
 
