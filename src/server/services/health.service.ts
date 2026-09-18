@@ -3,7 +3,7 @@ import { db } from "@/lib/db";
 import { getR2Client, getBucketName } from "@/lib/r2";
 import {
   getConfig as getCashfreeConfig,
-  cashfreeRequest,
+  fetchCashfreeOrder,
 } from "@/lib/cashfree";
 import { getRecentErrorEvents } from "@/lib/logger";
 
@@ -300,36 +300,56 @@ async function checkPayments(): Promise<HealthCheck> {
   } catch (err) {
     return {
       name: "Payments (Cashfree)",
-      status: "NOT_CONFIGURED",
-      detail: `Cashfree configuration is incomplete: ${sanitizeError(err)}`,
+      status: "ERROR",
+      detail: `Cashfree configuration error: ${sanitizeError(err)}`,
     };
   }
 
   try {
-    const start = Date.now();
-
-    // Cheap, read-only, authenticated Cashfree API call.
-    // This verifies that the App ID and Secret Key actually authenticate.
-    await cashfreeRequest("/orders?limit=1", {
-      method: "GET",
+    const latestOrder = await db.order.findFirst({
+      where: {
+        cashfreeOrderId: {
+          not: null,
+        },
+      },
+      orderBy: {
+        createdAt: "desc",
+      },
+      select: {
+        cashfreeOrderId: true,
+      },
     });
 
-    const latencyMs = Date.now() - start;
+    if (!latestOrder?.cashfreeOrderId) {
+      return {
+        name: "Payments (Cashfree)",
+        status: "WARNING",
+        detail:
+          config.environment === "sandbox"
+            ? "Cashfree configured · Sandbox environment · No Cashfree orders yet to verify API access"
+            : "Cashfree configured · Production environment · No Cashfree orders yet to verify API access",
+      };
+    }
+
+    const startedAt = Date.now();
+
+    await fetchCashfreeOrder(latestOrder.cashfreeOrderId);
+
+    const latencyMs = Date.now() - startedAt;
 
     return {
       name: "Payments (Cashfree)",
       status: "HEALTHY",
       detail:
         config.environment === "sandbox"
-          ? "Cashfree credentials verified · Sandbox environment"
-          : "Cashfree credentials verified · Production environment",
-      latencyMs,
+          ? `Cashfree API authenticated · Sandbox · ${latencyMs}ms`
+          : `Cashfree API authenticated · Production · ${latencyMs}ms`,
     };
   } catch (err) {
     return {
       name: "Payments (Cashfree)",
       status: "ERROR",
-      detail: `Cashfree credentials did not authenticate: ${sanitizeError(err)}`,
+      detail: `Cashfree API check failed: ${sanitizeError(err)}`,
     };
   }
 }
