@@ -81,6 +81,7 @@ export async function POST(req: NextRequest) {
 
         return NextResponse.json({
             ok: true,
+            challengeId: challenge.challengeId,
             expiresAt: challenge.expiresAt,
         });
     } catch (err) {

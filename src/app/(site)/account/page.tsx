@@ -10,6 +10,7 @@ import { AccountProfileForm } from "@/components/account-profile-form";
 import { AccountEmailForm } from "@/components/account-email-form";
 import { AccountPasswordForm } from "@/components/account-password-form";
 import { EmptyState } from "@/components/empty-state";
+import { AccountEmailVerification } from "@/components/account-email-verification";
 import { formatDate, formatDateTime, formatPaise, cn } from "@/lib/utils";
 
 export const metadata: Metadata = { title: "My Account" };
@@ -47,8 +48,17 @@ export default async function AccountPage() {
         {/* --- Security --- */}
         <section>
           <h2 className="mb-3 font-display text-base font-semibold text-ink">Security</h2>
+
           <div className="card space-y-5 p-5">
-            <AccountEmailForm currentEmail={user.email} />
+            <AccountEmailVerification
+              email={user.email}
+              verified={!!user.emailVerifiedAt}
+            />
+
+            <div className="border-t border-border pt-5">
+              <AccountEmailForm currentEmail={user.email} />
+            </div>
+
             <div className="border-t border-border pt-5">
               <AccountPasswordForm />
             </div>

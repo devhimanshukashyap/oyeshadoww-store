@@ -21,7 +21,11 @@ export async function sendEmail(params: SendEmailParams): Promise<void> {
   const provider = process.env.EMAIL_PROVIDER ?? "console";
 
   if (provider === "console") {
-    logger.info("email.console_send", { to: params.to, subject: params.subject });
+    logger.info("email.console_send", {
+      to: params.to,
+      subject: params.subject,
+      text: params.text,
+    });
     return;
   }
 
