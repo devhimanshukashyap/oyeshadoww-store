@@ -28,7 +28,13 @@ export async function POST(req: NextRequest) {
 
     const passwordHash = await hashPassword(body.password);
     const user = await db.user.create({
-      data: { name: body.name, email, passwordHash, role: "CUSTOMER" },
+      data: {
+        name: body.name,
+        email,
+        phone: body.phone,
+        passwordHash,
+        role: "CUSTOMER",
+      },
     });
 
     logger.info("user.registered", { userId: user.id });

@@ -9,6 +9,7 @@ export function RegisterForm({ callbackUrl }: { callbackUrl?: string }) {
   const router = useRouter();
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
+  const [phone, setPhone] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -21,7 +22,7 @@ export function RegisterForm({ callbackUrl }: { callbackUrl?: string }) {
     const res = await fetch("/api/register", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name, email, password }),
+      body: JSON.stringify({ name, email, phone, password }),
     });
     const data = await res.json();
 
@@ -48,6 +49,22 @@ export function RegisterForm({ callbackUrl }: { callbackUrl?: string }) {
       <div>
         <label htmlFor="name" className="label">Name</label>
         <input id="name" required value={name} onChange={(e) => setName(e.target.value)} className="input" />
+      </div>
+      <div>
+        <label htmlFor="phone" className="label">Mobile Number</label>
+        <input
+          id="phone"
+          type="tel"
+          inputMode="numeric"
+          autoComplete="tel"
+          required
+          maxLength={10}
+          pattern="[6-9][0-9]{9}"
+          value={phone}
+          onChange={(e) => setPhone(e.target.value.replace(/\D/g, "").slice(0, 10))}
+          className="input"
+          placeholder="10-digit mobile number"
+        />
       </div>
       <div>
         <label htmlFor="email" className="label">Email</label>

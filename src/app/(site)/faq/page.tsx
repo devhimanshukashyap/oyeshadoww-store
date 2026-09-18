@@ -21,7 +21,7 @@ const faqs = [
   },
   {
     q: "What payment methods are supported?",
-    a: "Checkout is handled by Razorpay, supporting cards, UPI, netbanking, and wallets.",
+    a: "Checkout is handled securely by Cashfree, supporting cards, UPI, netbanking, and other popular payment methods.",
   },
   {
     q: "I paid but don't see my bundle — what do I do?",

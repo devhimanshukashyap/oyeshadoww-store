@@ -43,7 +43,7 @@ export default async function CheckoutPage({
       <CheckoutPanel productId={product.id} productName={product.name} variant={variant} userEmail={user.email ?? ""} />
 
       <p className="mt-6 text-center text-xs text-ink-faint">
-        Payments are processed securely by Razorpay. We never see or store your card details.
+        Payments are processed securely by Cashfree. We never see or store your card details.
       </p>
     </div>
   );

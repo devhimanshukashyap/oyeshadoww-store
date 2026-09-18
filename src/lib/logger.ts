@@ -2,7 +2,7 @@
  * Minimal structured logger.
  *
  * Rules (see docs/SECURITY.md "Logging" section):
- * - Never pass passwords, password hashes, API secrets, Razorpay key
+ * - Never pass passwords, password hashes, API secrets, Payment provider key
  *   secrets, R2 credentials, or full webhook signatures into `meta`.
  * - Every log line is one JSON object per line (easy to ship to any log
  *   aggregator later) with a timestamp, level, event name, and metadata.

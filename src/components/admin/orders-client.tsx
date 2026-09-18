@@ -14,8 +14,8 @@ interface OrderRow {
   currency: string;
   createdAt: string;
   paidAt: string | null;
-  razorpayOrderId: string | null;
-  razorpayPaymentId: string | null;
+  cashfreeOrderId: string | null;
+  cashfreePaymentId: string | null;
   user: { email: string; name: string | null };
   items: { productNameSnapshot: string; variant: string }[];
 }
@@ -88,8 +88,10 @@ export function OrdersClient() {
                 <p className="text-xs text-ink-faint">
                   {order.user.email} · {formatDateTime(order.createdAt)}
                 </p>
-                {order.razorpayPaymentId && (
-                  <p className="text-xs text-ink-faint">Payment: {order.razorpayPaymentId}</p>
+                {order.cashfreePaymentId && (
+                  <p className="text-xs text-ink-faint">
+                    Payment: {order.cashfreePaymentId}
+                  </p>
                 )}
               </div>
               <div className="flex shrink-0 items-center gap-3">

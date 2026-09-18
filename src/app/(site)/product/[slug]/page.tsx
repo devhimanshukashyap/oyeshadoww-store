@@ -117,7 +117,7 @@ async function ProductDetail({ slug }: { slug: string }) {
           </div>
 
           <div className="mt-6 flex items-center gap-2 text-xs text-ink-faint">
-            <ShieldCheck size={14} /> Secure payment via Razorpay · Instant access after payment
+            <ShieldCheck size={14} /> Secure payment via Cashfree · Instant access after payment
           </div>
 
           {product.description && (

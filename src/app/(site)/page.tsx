@@ -123,7 +123,7 @@ function Hero({ brandHandle, tagline }: { brandHandle: string; tagline: string }
 function HowItWorks() {
   const steps = [
     { title: "Pick a bundle", desc: "Browse reel bundles by category and preview before you buy." },
-    { title: "Pay securely", desc: "Checkout with Razorpay — cards, UPI, netbanking, wallets." },
+    { title: "Pay securely", desc: "Checkout with Cashfree — cards, UPI, netbanking, wallets." },
     { title: "Get instant access", desc: "Your bundle appears in My Purchases the moment payment clears." },
     { title: "Download & post", desc: "Preview, download individually, or grab the whole bundle at once." },
   ];

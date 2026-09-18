@@ -6,6 +6,10 @@ import { z } from "zod";
 export const registerSchema = z.object({
   name: z.string().trim().min(1).max(100),
   email: z.string().trim().email().max(200),
+  phone: z
+    .string()
+    .trim()
+    .regex(/^[6-9]\d{9}$/, "Enter a valid 10-digit Indian mobile number"),
   password: z.string().min(8).max(200),
 });
 
@@ -20,9 +24,7 @@ export const createOrderSchema = z.object({
 });
 
 export const verifyPaymentSchema = z.object({
-  razorpay_order_id: z.string().min(1),
-  razorpay_payment_id: z.string().min(1),
-  razorpay_signature: z.string().min(1),
+  orderId: z.string().min(1),
 });
 
 export const singleDownloadSchema = z.object({

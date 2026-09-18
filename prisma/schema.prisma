@@ -35,6 +35,7 @@ model User {
   id           String   @id @default(cuid())
   name         String?
   email        String   @unique
+  phone        String?
   passwordHash String
   role         Role     @default(CUSTOMER)
   createdAt    DateTime @default(now())
@@ -238,6 +239,9 @@ model Order {
   razorpayOrderId   String? @unique
   razorpayPaymentId String? @unique
   razorpaySignature String?
+
+  cashfreeOrderId   String? @unique
+  cashfreePaymentId String? @unique
 
   failureReason String?
 
