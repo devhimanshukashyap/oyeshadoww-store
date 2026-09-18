@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import { Space_Grotesk, Inter } from "next/font/google";
 import { Providers } from "@/components/providers";
-import { getSettings } from "@/lib/settings";
 import "./globals.css";
 
 /**
@@ -43,43 +42,39 @@ const inter = Inter({
   display: "swap",
 });
 
-export async function generateMetadata(): Promise<Metadata> {
-  const settings = await getSettings();
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
-
-  return {
-    metadataBase: new URL(siteUrl),
-    title: {
-      default: `${settings.brandHandle} — AI reel bundles`,
-      template: `%s · ${settings.brandHandle}`,
-    },
-    description: settings.tagline,
-    // Static, pre-rendered icon assets only — see public/icon.svg,
-    // public/favicon.ico, public/apple-touch-icon.png. Nothing here is
-    // generated at request time. To change the logo, replace these files
-    // (see README.md "Where do I change things?" → Branding).
-    icons: {
-      icon: [
-        { url: "/icon.svg", type: "image/svg+xml" },
-        { url: "/favicon.ico", sizes: "any" },
-      ],
-      apple: [{ url: "/apple-touch-icon.png" }],
-    },
-    manifest: "/site.webmanifest",
-    openGraph: {
-      title: `${settings.brandHandle} — AI reel bundles`,
-      description: settings.tagline,
-      siteName: settings.siteName,
-      type: "website",
-    },
-    twitter: {
-      card: "summary_large_image",
-      title: `${settings.brandHandle} — AI reel bundles`,
-      description: settings.tagline,
-    },
-    robots: { index: true, follow: true },
-  };
-}
+export const metadata: Metadata = {
+  metadataBase: new URL(
+    process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000"
+  ),
+  title: {
+    default: "@oyeshadoww — AI reel bundles",
+    template: "%s · @oyeshadoww",
+  },
+  description: "AI-made reels, ready to post.",
+  icons: {
+    icon: [
+      { url: "/icon.svg", type: "image/svg+xml" },
+      { url: "/favicon.ico", sizes: "any" },
+    ],
+    apple: [{ url: "/apple-touch-icon.png" }],
+  },
+  manifest: "/site.webmanifest",
+  openGraph: {
+    title: "@oyeshadoww — AI reel bundles",
+    description: "AI-made reels, ready to post.",
+    siteName: "oyeshadoww",
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "@oyeshadoww — AI reel bundles",
+    description: "AI-made reels, ready to post.",
+  },
+  robots: {
+    index: true,
+    follow: true,
+  },
+};
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (

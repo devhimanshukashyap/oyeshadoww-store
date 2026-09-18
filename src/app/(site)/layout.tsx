@@ -4,6 +4,8 @@ import { getSettings } from "@/lib/settings";
 import { getCurrentUser } from "@/lib/session";
 import { Wrench } from "lucide-react";
 
+export const dynamic = "force-dynamic";
+
 export default async function SiteLayout({ children }: { children: React.ReactNode }) {
   const [settings, user] = await Promise.all([getSettings(), getCurrentUser()]);
 
