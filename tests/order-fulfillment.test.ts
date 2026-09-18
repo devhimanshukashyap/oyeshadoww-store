@@ -46,7 +46,7 @@ describe("fulfillOrder idempotency", () => {
     mockDb.order.update.mockResolvedValue({ ...baseOrder, status: "PAID" });
     mockDb.purchase.upsert.mockResolvedValue({});
 
-    const result = await fulfillOrder({ orderId: "order_1", razorpayPaymentId: "pay_1" });
+    const result = await fulfillOrder({ orderId: "order_1", cashfreePaymentId: "pay_1" });
 
     expect(mockDb.purchase.upsert).toHaveBeenCalledTimes(1);
     expect(result.alreadyProcessed).toBe(false);
@@ -56,10 +56,10 @@ describe("fulfillOrder idempotency", () => {
     // Simulate the order having already been marked PAID by the first call.
     mockDb.order.findUnique.mockResolvedValue({ ...baseOrder, status: "PAID" });
 
-    const result = await fulfillOrder({ orderId: "order_1", razorpayPaymentId: "pay_1" });
+    const result = await fulfillOrder({ orderId: "order_1", cashfreePaymentId: "pay_1" });
 
     // No new Purchase upsert, no order update — this is what prevents a
-    // duplicated/replayed Razorpay webhook from granting access twice or
+    // duplicated/replayed Cashfree webhook from granting access twice or
     // corrupting revenue reporting.
     expect(mockDb.purchase.upsert).not.toHaveBeenCalled();
     expect(mockDb.order.update).not.toHaveBeenCalled();
@@ -69,7 +69,7 @@ describe("fulfillOrder idempotency", () => {
   it("refuses to resurrect a refunded order back to PAID", async () => {
     mockDb.order.findUnique.mockResolvedValue({ ...baseOrder, status: "REFUNDED" });
 
-    const result = await fulfillOrder({ orderId: "order_1", razorpayPaymentId: "pay_1" });
+    const result = await fulfillOrder({ orderId: "order_1", cashfreePaymentId: "pay_1" });
 
     expect(mockDb.purchase.upsert).not.toHaveBeenCalled();
     expect(result.alreadyProcessed).toBe(true);

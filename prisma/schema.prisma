@@ -31,43 +31,68 @@ enum Role {
   ADMIN
 }
 
+enum VerificationChallengeType {
+  EMAIL
+  PHONE
+}
+
 model User {
-  id           String   @id @default(cuid())
-  name         String?
-  email        String   @unique
-  phone        String?
-  passwordHash String
-  role         Role     @default(CUSTOMER)
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  id              String    @id @default(cuid())
+  name            String?
+  email           String    @unique
+  phone           String?
+  passwordHash    String
+  emailVerifiedAt DateTime?
+  phoneVerifiedAt DateTime?
+  role            Role      @default(CUSTOMER)
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
 
   // Simple, self-contained failed-login tracking for brute-force protection.
   // No external session store required.
-  failedLoginCount   Int       @default(0)
-  lockedUntil        DateTime?
-  lastLoginAt        DateTime?
+  failedLoginCount Int       @default(0)
+  lockedUntil      DateTime?
+  lastLoginAt      DateTime?
 
-  orders         Order[]
-  purchases      Purchase[]
-  downloadLogs   DownloadLog[]
-  batchJobs      BatchDownloadJob[]
-  auditLogs      AdminAuditLog[]
-  passwordResets PasswordResetToken[]
+  orders                 Order[]
+  purchases              Purchase[]
+  downloadLogs           DownloadLog[]
+  batchJobs              BatchDownloadJob[]
+  auditLogs              AdminAuditLog[]
+  passwordResets         PasswordResetToken[]
+  verificationChallenges VerificationChallenge[]
 
   @@index([email])
 }
 
 model PasswordResetToken {
-  id        String   @id @default(cuid())
+  id        String    @id @default(cuid())
   userId    String
-  tokenHash String   @unique
+  tokenHash String    @unique
   expiresAt DateTime
   usedAt    DateTime?
-  createdAt DateTime @default(now())
+  createdAt DateTime  @default(now())
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
+}
+
+model VerificationChallenge {
+  id        String                    @id @default(cuid())
+  userId    String
+  type      VerificationChallengeType
+  target    String
+  codeHash  String
+  expiresAt DateTime
+  attempts  Int                       @default(0)
+  usedAt    DateTime?
+  createdAt DateTime                  @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, type])
+  @@index([target, type])
 }
 
 // ----------------------------------------------------------------------------
@@ -103,10 +128,10 @@ model Category {
 /// A purchasable Product ("Bundle"). Prices live here, in the DB — never
 /// hardcoded in the frontend or trusted from client requests.
 model Product {
-  id    String @id @default(cuid())
-  type  ProductType @default(BUNDLE)
-  name  String
-  slug  String @unique
+  id   String      @id @default(cuid())
+  type ProductType @default(BUNDLE)
+  name String
+  slug String      @unique
 
   categoryId String?
   category   Category? @relation(fields: [categoryId], references: [id])
@@ -154,13 +179,13 @@ enum Visibility {
 /// One reel inside a bundle. Each reel may have a watermarked file and/or a
 /// clean (non-watermarked) file — each stored as its own StorageObject.
 model Reel {
-  id        String @id @default(cuid())
+  id        String  @id @default(cuid())
   productId String
   product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
 
   title       String
   description String?
-  sortOrder   Int     @default(0)
+  sortOrder   Int        @default(0)
   visibility  Visibility @default(VISIBLE)
 
   thumbnailKey String?
@@ -233,8 +258,8 @@ model Order {
   user   User        @relation(fields: [userId], references: [id])
   status OrderStatus @default(CREATED)
 
-  currency        String @default("INR")
-  totalAmountPaise Int   // authoritative amount, computed server-side from DB prices
+  currency         String @default("INR")
+  totalAmountPaise Int // authoritative amount, computed server-side from DB prices
 
   razorpayOrderId   String? @unique
   razorpayPaymentId String? @unique
@@ -251,8 +276,8 @@ model Order {
   failedAt   DateTime?
   refundedAt DateTime?
 
-  items      OrderItem[]
-  purchases  Purchase[]
+  items     OrderItem[]
+  purchases Purchase[]
 
   @@index([userId])
   @@index([razorpayOrderId])
@@ -269,8 +294,8 @@ model OrderItem {
   productId String
   product   Product @relation(fields: [productId], references: [id])
 
-  variant       Variant
-  unitPricePaise Int
+  variant             Variant
+  unitPricePaise      Int
   productNameSnapshot String
 
   @@index([orderId])
@@ -384,9 +409,9 @@ model BatchDownloadJob {
   sizeBytes  BigInt?
   error      String?
 
-  createdAt  DateTime  @default(now())
-  updatedAt  DateTime  @updatedAt
-  expiresAt  DateTime?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  expiresAt DateTime?
 
   @@index([userId, createdAt])
   @@index([status])
@@ -406,10 +431,10 @@ model SiteSetting {
 }
 
 model AdminAuditLog {
-  id        String   @id @default(cuid())
-  adminId   String
-  admin     User     @relation(fields: [adminId], references: [id])
-  action    String
+  id         String   @id @default(cuid())
+  adminId    String
+  admin      User     @relation(fields: [adminId], references: [id])
+  action     String
   targetType String?
   targetId   String?
   metadata   Json?

@@ -127,28 +127,28 @@ export async function getHealthSnapshot(): Promise<HealthSnapshot> {
     webhookActivityR.status === "fulfilled"
       ? webhookActivityR.value
       : {
-          lastEventType: null,
-          lastEventStatus: null,
-          lastEventAt: null,
-          lastSuccessAt: null,
-          recentFailureCount: 0,
-        };
+        lastEventType: null,
+        lastEventStatus: null,
+        lastEventAt: null,
+        lastSuccessAt: null,
+        recentFailureCount: 0,
+      };
 
   const storageActivity: StorageActivity =
     storageActivityR.status === "fulfilled"
       ? storageActivityR.value
       : {
-          lastSuccessfulUploadAt: null,
-          lastFailedUploadAt: null,
-        };
+        lastSuccessfulUploadAt: null,
+        lastFailedUploadAt: null,
+      };
 
   const paymentActivity: PaymentActivity =
     paymentActivityR.status === "fulfilled"
       ? paymentActivityR.value
       : {
-          lastSuccessfulPaymentAt: null,
-          lastFailedPaymentAt: null,
-        };
+        lastSuccessfulPaymentAt: null,
+        lastFailedPaymentAt: null,
+      };
 
   const recentErrors =
     recentErrorsR.status === "fulfilled"
@@ -297,11 +297,12 @@ async function checkPayments(): Promise<HealthCheck> {
 
   try {
     config = getCashfreeConfig();
-  } catch (err) {
+  } catch {
     return {
       name: "Payments (Cashfree)",
-      status: "ERROR",
-      detail: `Cashfree configuration error: ${sanitizeError(err)}`,
+      status: "NOT_CONFIGURED",
+      detail:
+        "Cashfree credentials are not configured — payment verification is unavailable",
     };
   }
 
@@ -597,33 +598,29 @@ async function getRecentOperationalErrors(): Promise<{
 
     ...webhookFailures.map((w) => ({
       source: "webhook" as const,
-      message: `Webhook processing failed: ${w.type}${
-        w.error ? ` — ${truncate(w.error)}` : ""
-      }`,
+      message: `Webhook processing failed: ${w.type}${w.error ? ` — ${truncate(w.error)}` : ""
+        }`,
       at: w.receivedAt.toISOString(),
     })),
 
     ...paymentFailures.map((o) => ({
       source: "payment" as const,
-      message: `Payment failed${
-        o.failureReason ? `: ${truncate(o.failureReason)}` : ""
-      }`,
+      message: `Payment failed${o.failureReason ? `: ${truncate(o.failureReason)}` : ""
+        }`,
       at: (o.failedAt ?? o.createdAt).toISOString(),
     })),
 
     ...downloadFailures.map((d) => ({
       source: "download" as const,
-      message: `Download failed${
-        d.reason ? `: ${truncate(d.reason)}` : ""
-      }`,
+      message: `Download failed${d.reason ? `: ${truncate(d.reason)}` : ""
+        }`,
       at: d.createdAt.toISOString(),
     })),
 
     ...batchFailures.map((b) => ({
       source: "batch" as const,
-      message: `Batch ZIP generation failed${
-        b.error ? `: ${truncate(b.error)}` : ""
-      }`,
+      message: `Batch ZIP generation failed${b.error ? `: ${truncate(b.error)}` : ""
+        }`,
       at: b.updatedAt.toISOString(),
     })),
 

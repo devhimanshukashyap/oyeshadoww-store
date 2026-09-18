@@ -62,13 +62,13 @@ describe("getHealthSnapshot — NOT_CONFIGURED correctness", () => {
     expect(storage?.status).toBe("NOT_CONFIGURED");
   });
 
-  it("reports Payments (Razorpay) as NOT_CONFIGURED — never HEALTHY — when keys are absent", async () => {
+  it("reports Payments (Cashfree) as NOT_CONFIGURED — never HEALTHY — when keys are absent", async () => {
     const snapshot = await getHealthSnapshot();
-    const payments = snapshot.checks.find((c) => c.name === "Payments (Razorpay)");
+const payments = snapshot.checks.find((c) => c.name === "Payments (Cashfree)");
     expect(payments?.status).toBe("NOT_CONFIGURED");
   });
 
-  it("reports Webhooks as NOT_CONFIGURED when RAZORPAY_WEBHOOK_SECRET is unset, even if events exist", async () => {
+  it("reports Webhooks as NOT_CONFIGURED when CASHFREE_SECRET_KEY is unset, even if events exist", async () => {
     // Even with a webhook event on record, an unset secret means no
     // incoming webhook could have been verified — this must not read as
     // healthy just because a row exists in the table.
