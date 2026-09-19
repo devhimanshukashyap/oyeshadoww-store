@@ -29,7 +29,7 @@ export default async function AdminDashboardPage() {
     { label: "Today's revenue", value: formatPaise(stats.todayRevenuePaise), Icon: IndianRupee },
     { label: "Total orders", value: stats.totalOrders, Icon: ShoppingCart },
     { label: "Today's orders", value: stats.todayOrders, Icon: ShoppingCart },
-    { label: "Paid orders", value: stats.paidOrders, Icon: CheckCircle2 },
+    { label: "Pending payments", value: stats.pendingOrders, Icon: AlertCircle },
     { label: "Failed payments", value: stats.failedOrders, Icon: AlertCircle },
     { label: "Refunded orders", value: stats.refundedOrders, Icon: RefreshCcw },
     { label: "Customers", value: stats.totalCustomers, Icon: Users },
