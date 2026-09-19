@@ -32,6 +32,7 @@ ENV DATABASE_URL="postgresql://user:pass@localhost:5432/db"
 RUN npx prisma generate
 
 ARG NEXT_PUBLIC_CASHFREE_ENVIRONMENT
+RUN echo "Cashfree frontend environment: $NEXT_PUBLIC_CASHFREE_ENVIRONMENT"
 ENV NEXT_PUBLIC_CASHFREE_ENVIRONMENT=$NEXT_PUBLIC_CASHFREE_ENVIRONMENT
 
 RUN npm run build
