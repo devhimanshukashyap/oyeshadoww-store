@@ -10,6 +10,7 @@ import {
   MAX_VIDEO_BYTES,
   buildProductAssetKey,
   buildReelKey,
+  buildReelThumbnailKey,
   createUploadUrl,
 } from "@/lib/r2";
 import { nanoid } from "nanoid";
@@ -52,9 +53,21 @@ export async function POST(req: NextRequest) {
     if (!product) return NextResponse.json({ error: "Product not found" }, { status: 404 });
 
     const reelId = body.reelId ?? `pending-${nanoid(12)}`;
-    const key = isVideo
-      ? buildReelKey(product.id, reelId, body.kind === "reel-watermarked" ? "watermarked" : "clean", body.filename)
-      : buildProductAssetKey(product.id, body.kind === "thumbnail" ? "thumbnail" : "preview", body.filename);
+    const key =
+      body.kind === "reel-thumbnail"
+        ? buildReelThumbnailKey(product.id, reelId)
+        : isVideo
+          ? buildReelKey(
+            product.id,
+            reelId,
+            body.kind === "reel-watermarked" ? "watermarked" : "clean",
+            body.filename
+          )
+          : buildProductAssetKey(
+            product.id,
+            body.kind === "thumbnail" ? "thumbnail" : "preview",
+            body.filename
+          );
 
     const storageObject = await db.storageObject.create({
       data: {

@@ -9,7 +9,13 @@ import { logAdminAction } from "@/server/services/audit.service";
 const completeSchema = z.object({
   storageObjectId: z.string().min(1),
   productId: z.string().min(1),
-  kind: z.enum(["reel-watermarked", "reel-clean", "thumbnail", "preview"]),
+  kind: z.enum([
+    "reel-watermarked",
+    "reel-clean",
+    "reel-thumbnail",
+    "thumbnail",
+    "preview",
+  ]),
   reelId: z.string().optional(), // attach to an existing reel
   newReelTitle: z.string().min(1).max(150).optional(), // or create a new reel with this title
 });
@@ -41,13 +47,57 @@ export async function POST(req: NextRequest) {
             ? { thumbnailKey: storageObject.key }
             : { previewVideoKey: storageObject.key },
       });
+
       await logAdminAction({
         adminId: admin.id,
         action: `product.${body.kind}.set`,
         targetType: "Product",
         targetId: body.productId,
       });
+
       return NextResponse.json({ ok: true });
+    }
+
+    if (body.kind === "reel-thumbnail") {
+      if (!body.reelId) {
+        return NextResponse.json(
+          { error: "Reel ID is required for a reel thumbnail." },
+          { status: 400 }
+        );
+      }
+
+      const reel = await db.reel.findFirst({
+        where: {
+          id: body.reelId,
+          productId: body.productId,
+          deletedAt: null,
+        },
+      });
+
+      if (!reel) {
+        return NextResponse.json(
+          { error: "Reel not found." },
+          { status: 404 }
+        );
+      }
+
+      await db.reel.update({
+        where: { id: reel.id },
+        data: { thumbnailKey: storageObject.key },
+      });
+
+      await logAdminAction({
+        adminId: admin.id,
+        action: "reel.thumbnail.set",
+        targetType: "Reel",
+        targetId: reel.id,
+      });
+
+      return NextResponse.json({
+        ok: true,
+        reelId: reel.id,
+        thumbnailKey: storageObject.key,
+      });
     }
 
     // reel-watermarked / reel-clean

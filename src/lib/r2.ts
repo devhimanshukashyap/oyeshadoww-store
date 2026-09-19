@@ -79,6 +79,13 @@ export function buildReelKey(
   return `products/${productId}/reels/${reelId}/${variant}/${sanitizeFilename(filename)}`;
 }
 
+export function buildReelThumbnailKey(
+  productId: string,
+  reelId: string
+): string {
+  return `products/${productId}/reels/${reelId}/thumbnail/first-frame.webp`;
+}
+
 export function buildProductAssetKey(
   productId: string,
   kind: "thumbnail" | "preview",
