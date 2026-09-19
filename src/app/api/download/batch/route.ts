@@ -21,7 +21,8 @@ export async function POST(req: NextRequest) {
     const result = await createBatchJob({
       userId: user.id,
       productId: body.productId,
-      reelIds: [...new Set(body.reelIds)], // de-dupe repeated selections
+      variant: body.variant,
+      reelIds: [...new Set(body.reelIds)],
     });
 
     if (!result.ok) {

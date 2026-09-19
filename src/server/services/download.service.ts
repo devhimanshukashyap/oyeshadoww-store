@@ -110,10 +110,16 @@ export async function getSingleDownloadUrl(params: {
  * processBatchJob() function below is already a self-contained unit of
  * work that a queue worker could call directly.
  */
-export async function createBatchJob(params: { userId: string; productId: string; reelIds: string[] }) {
+export async function createBatchJob(params: {
+  userId: string;
+  productId: string;
+  variant: Variant;
+  reelIds: string[];
+}) {
   const access = await resolveBatchAccess({
     userId: params.userId,
     productId: params.productId,
+    variant: params.variant,
     reelIds: params.reelIds,
   });
 

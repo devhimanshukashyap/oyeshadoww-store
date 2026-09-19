@@ -20,7 +20,7 @@ export default async function PurchaseDetailPage({ params }: { params: { product
   const detail = await getPurchasedProductDetail(user.id, params.productId);
   if (!detail) notFound();
 
-  const { product, variant } = detail;
+  const { product, ownedVariants } = detail;
 
   return (
     <div className="container-page py-10">
@@ -32,7 +32,12 @@ export default async function PurchaseDetailPage({ params }: { params: { product
         <div>
           <h1 className="font-display text-3xl font-semibold text-ink">{product.name}</h1>
           <p className="mt-1 text-ink-muted">
-            {product.reels.length} reels · {variant === "CLEAN" ? "Non-watermarked" : "Watermarked"}
+            {product.reels.length} reels ·{" "}
+            {ownedVariants.length === 2
+              ? "Watermarked + Non-watermarked"
+              : ownedVariants[0] === "CLEAN"
+                ? "Non-watermarked"
+                : "Watermarked"}
           </p>
         </div>
       </div>
@@ -40,6 +45,7 @@ export default async function PurchaseDetailPage({ params }: { params: { product
       <div className="mt-8">
         <ReelList
           productId={product.id}
+          variant={ownedVariants.length === 2 ? "CLEAN" : ownedVariants[0]}
           reels={product.reels.map((r) => ({
             id: r.id,
             title: r.title,

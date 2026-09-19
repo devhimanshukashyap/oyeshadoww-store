@@ -70,6 +70,6 @@ export async function getPurchasedProductDetail(userId: string, productId: strin
   });
   if (!product) return null;
 
-  const variant = paid.some((p) => p.variant === "CLEAN") ? "CLEAN" : "WATERMARKED";
-  return { product, variant };
+  const ownedVariants = paid.map((p) => p.variant);
+  return { product, ownedVariants };
 }

@@ -3,6 +3,7 @@
 import { useState, useCallback, useRef, useEffect } from "react";
 import { Play, Download, Loader2, CheckSquare, Square, PackageCheck, X } from "lucide-react";
 import { cn } from "@/lib/utils";
+import type { Variant } from "@prisma/client";
 
 interface Reel {
   id: string;
@@ -19,7 +20,15 @@ type BatchState =
   | { phase: "ready"; url: string }
   | { phase: "error"; message: string };
 
-export function ReelList({ productId, reels }: { productId: string; reels: Reel[] }) {
+export function ReelList({
+  productId,
+  variant,
+  reels,
+}: {
+  productId: string;
+  variant: Variant;
+  reels: Reel[];
+}) {
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [previewId, setPreviewId] = useState<string | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
@@ -54,7 +63,7 @@ export function ReelList({ productId, reels }: { productId: string; reels: Reel[
     const res = await fetch("/api/download/reel", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ reelId, intent: "preview" }),
+      body: JSON.stringify({ reelId, variant, intent: "preview" }),
     });
     const data = await res.json();
     if (res.ok) setPreviewUrl(data.url);
@@ -66,7 +75,7 @@ export function ReelList({ productId, reels }: { productId: string; reels: Reel[
       const res = await fetch("/api/download/reel", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ reelId, intent: "download" }),
+        body: JSON.stringify({ reelId, variant, intent: "download" }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? "Download failed");
@@ -86,7 +95,11 @@ export function ReelList({ productId, reels }: { productId: string; reels: Reel[
       const res = await fetch("/api/download/batch", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ productId, reelIds: [...selected] }),
+        body: JSON.stringify({
+          productId,
+          variant,
+          reelIds: [...selected],
+        }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? "Could not start download");
@@ -111,7 +124,7 @@ export function ReelList({ productId, reels }: { productId: string; reels: Reel[
     } catch (err: any) {
       setBatch({ phase: "error", message: err.message ?? "Could not start download." });
     }
-  }, [productId, selected]);
+  }, [productId, selected, variant]);
 
   return (
     <div>

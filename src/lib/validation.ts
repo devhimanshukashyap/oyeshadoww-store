@@ -34,6 +34,7 @@ export const singleDownloadSchema = z.object({
 
 export const batchDownloadCreateSchema = z.object({
   productId: z.string().min(1),
+  variant: z.enum(["WATERMARKED", "CLEAN"]),
   reelIds: z.array(z.string().min(1)).min(1).max(200),
 });
 

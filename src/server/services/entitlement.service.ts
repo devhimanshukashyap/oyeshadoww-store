@@ -92,9 +92,15 @@ export async function resolveReelAccess(params: {
 export async function resolveBatchAccess(params: {
   userId: string;
   productId: string;
+  variant: Variant;
   reelIds: string[];
 }) {
-  const entitlement = await entitlementForProduct(params.userId, params.productId);
+  const entitlement = await entitlementForProduct(
+    params.userId,
+    params.productId,
+    params.variant
+  );
+
   if (!entitlement.authorized) return entitlement;
 
   const reels = await db.reel.findMany({
@@ -108,11 +114,13 @@ export async function resolveBatchAccess(params: {
 
   const foundIds = new Set(reels.map((r) => r.id));
   const missing = params.reelIds.filter((id) => !foundIds.has(id));
+
   if (missing.length > 0) {
     return { authorized: false as const, reason: "NOT_FOUND" as const, missing };
   }
 
   const variant = entitlement.variant;
+
   const usable = reels.filter((r) => {
     const obj = variant === "CLEAN" ? r.cleanObject : r.watermarkedObject;
     return obj && obj.status === "READY";
@@ -125,13 +133,29 @@ export async function resolveBatchAccess(params: {
   return { authorized: true as const, variant, reels: usable };
 }
 
-async function entitlementForProduct(userId: string, productId: string) {
+async function entitlementForProduct(
+  userId: string,
+  productId: string,
+  requestedVariant: Variant
+) {
   const purchases = await db.purchase.findMany({
     where: { userId, productId, status: "ACTIVE" },
     include: { order: true },
   });
-  const paidVariants = purchases.filter((p) => p.order.status === "PAID").map((p) => p.variant);
-  if (paidVariants.length === 0) return { authorized: false as const, reason: "NOT_OWNED" as const };
-  const variant: Variant = paidVariants.includes("CLEAN") ? "CLEAN" : "WATERMARKED";
+
+  const paidVariants = purchases
+    .filter((p) => p.order.status === "PAID")
+    .map((p) => p.variant);
+
+  if (paidVariants.length === 0) {
+    return { authorized: false as const, reason: "NOT_OWNED" as const };
+  }
+
+  if (!paidVariants.includes(requestedVariant)) {
+    return { authorized: false as const, reason: "NOT_OWNED" as const };
+  }
+
+  const variant = requestedVariant;
+
   return { authorized: true as const, variant };
 }
