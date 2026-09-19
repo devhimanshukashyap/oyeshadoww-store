@@ -64,19 +64,19 @@ export function CheckoutPanel({
       const cashfree = window.Cashfree({
         mode:
           process.env.NEXT_PUBLIC_CASHFREE_ENVIRONMENT ===
-          "production"
+            "production"
             ? "production"
             : "sandbox",
       });
 
       await cashfree.checkout({
         paymentSessionId: createData.paymentSessionId,
-        redirectTarget: "_self",
+        redirectTarget: "_modal",
       });
     } catch (err: any) {
       setError(
         err?.message ??
-          "Something went wrong. Please try again.",
+        "Something went wrong. Please try again.",
       );
       setStatus("idle");
     }
