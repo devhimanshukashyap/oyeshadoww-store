@@ -9,9 +9,15 @@ import { formatPaise } from "@/lib/utils";
 import { ProductDetailSkeleton } from "@/components/skeletons";
 import { BuyButton } from "@/components/buy-button";
 
-export async function generateMetadata({ params }: { params: { slug: string } }): Promise<Metadata> {
+export async function generateMetadata({
+  params,
+}: {
+  params: { slug: string };
+}): Promise<Metadata> {
   const product = await getPublishedProductBySlug(params.slug);
+
   if (!product) return { title: "Bundle not found" };
+
   return {
     title: product.seoTitle ?? product.name,
     description: product.seoDescription ?? product.shortDescription ?? undefined,
@@ -22,7 +28,11 @@ export async function generateMetadata({ params }: { params: { slug: string } })
   };
 }
 
-export default function ProductPage({ params }: { params: { slug: string } }) {
+export default function ProductPage({
+  params,
+}: {
+  params: { slug: string };
+}) {
   return (
     <div className="container-page py-10">
       <Suspense fallback={<ProductDetailSkeleton />}>
@@ -33,7 +43,11 @@ export default function ProductPage({ params }: { params: { slug: string } }) {
 }
 
 async function ProductDetail({ slug }: { slug: string }) {
-  const [product, settings] = await Promise.all([getPublishedProductBySlug(slug), getSettings()]);
+  const [product, settings] = await Promise.all([
+    getPublishedProductBySlug(slug),
+    getSettings(),
+  ]);
+
   if (!product) notFound();
 
   const licenseText = product.licenseText || settings.defaultLicenseText;
@@ -46,17 +60,29 @@ async function ProductDetail({ slug }: { slug: string }) {
     offers: {
       "@type": "Offer",
       priceCurrency: product.currency,
-      price: ((product.watermarkedPriceInPaise ?? product.cleanPriceInPaise ?? 0) / 100).toFixed(2),
-      availability: product.purchasable ? "https://schema.org/InStock" : "https://schema.org/OutOfStock",
+      price: (
+        (product.watermarkedPriceInPaise ??
+          product.cleanPriceInPaise ??
+          0) / 100
+      ).toFixed(2),
+      availability: product.purchasable
+        ? "https://schema.org/InStock"
+        : "https://schema.org/OutOfStock",
     },
   };
 
   return (
     <div>
       {/* eslint-disable-next-line react/no-danger */}
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify(jsonLd),
+        }}
+      />
 
       <div className="grid gap-10 md:grid-cols-2">
+        {/* Preview */}
         <div>
           <div className="sticky top-24 mx-auto max-w-sm">
             <div className="aspect-[9/16] w-full overflow-hidden rounded-2xl border border-border bg-surface-raised">
@@ -65,14 +91,26 @@ async function ProductDetail({ slug }: { slug: string }) {
                   className="h-full w-full object-cover"
                   controls
                   preload="none"
-                  poster={product.thumbnailKey ? `/api/media/thumbnail?key=${encodeURIComponent(product.thumbnailKey)}` : undefined}
+                  poster={
+                    product.thumbnailKey
+                      ? `/api/media/thumbnail?key=${encodeURIComponent(
+                          product.thumbnailKey
+                        )}`
+                      : undefined
+                  }
                 >
-                  <source src={`/api/media/preview?key=${encodeURIComponent(product.previewVideoKey)}`} />
+                  <source
+                    src={`/api/media/preview?key=${encodeURIComponent(
+                      product.previewVideoKey
+                    )}`}
+                  />
                 </video>
               ) : product.thumbnailKey ? (
                 // eslint-disable-next-line @next/next/no-img-element
                 <img
-                  src={`/api/media/thumbnail?key=${encodeURIComponent(product.thumbnailKey)}`}
+                  src={`/api/media/thumbnail?key=${encodeURIComponent(
+                    product.thumbnailKey
+                  )}`}
                   alt={product.name}
                   className="h-full w-full object-cover"
                 />
@@ -85,65 +123,143 @@ async function ProductDetail({ slug }: { slug: string }) {
           </div>
         </div>
 
+        {/* Product information */}
         <div>
           {product.category && (
             <p className="text-eyebrow">{product.category.name}</p>
           )}
-          <h1 className="mt-1 font-display text-3xl font-semibold text-ink">{product.name}</h1>
-          <p className="mt-2 text-sm text-ink-muted">{product.reels.length} reels included</p>
 
-          {product.shortDescription && <p className="mt-4 text-ink-muted">{product.shortDescription}</p>}
+          <h1 className="mt-1 font-display text-3xl font-semibold text-ink">
+            {product.name}
+          </h1>
 
+          <p className="mt-2 text-sm text-ink-muted">
+            {product.reels.length} reels included
+          </p>
+
+          {product.shortDescription && (
+            <p className="mt-4 text-ink-muted">
+              {product.shortDescription}
+            </p>
+          )}
+
+          {/* Purchase options */}
           <div className="mt-6 space-y-3">
             {product.watermarkedPriceInPaise != null && (
               <PricingRow
                 slug={product.slug}
                 variant="WATERMARKED"
-                label="Watermarked"
-                note="Includes a visible watermark"
-                price={formatPaise(product.watermarkedPriceInPaise, product.currency)}
+                label="Bundle"
+                note="Watermarked reels"
+                price={formatPaise(
+                  product.watermarkedPriceInPaise,
+                  product.currency
+                )}
               />
             )}
+
             {product.cleanPriceInPaise != null && (
               <PricingRow
                 slug={product.slug}
                 variant="CLEAN"
-                label="Non-watermarked"
-                note="Clean, full-quality files"
-                price={formatPaise(product.cleanPriceInPaise, product.currency)}
+                label="Bundle+"
+                note="Non-watermarked reels + premium extras"
+                price={formatPaise(
+                  product.cleanPriceInPaise,
+                  product.currency
+                )}
                 highlight
               />
             )}
           </div>
 
+          <div className="mt-5 rounded-card border border-border bg-surface-raised p-4">
+            <p className="text-sm font-medium text-ink">
+              Why choose Bundle+?
+            </p>
+
+            <ul className="mt-2 space-y-1.5 text-sm text-ink-muted">
+              <li className="flex items-start gap-2">
+                <Check size={14} className="mt-0.5 shrink-0 text-success" />
+                Non-watermarked, clean reels
+              </li>
+              <li className="flex items-start gap-2">
+                <Check size={14} className="mt-0.5 shrink-0 text-success" />
+                Premium extras when available
+              </li>
+              <li className="flex items-start gap-2">
+                <Check size={14} className="mt-0.5 shrink-0 text-success" />
+                Future Bundle+ updates
+              </li>
+            </ul>
+          </div>
+
           <div className="mt-6 flex items-center gap-2 text-xs text-ink-faint">
-            <ShieldCheck size={14} /> Secure payment via Cashfree · Instant access after payment
+            <ShieldCheck size={14} />
+            Secure payment via Cashfree · Instant access after payment
           </div>
 
           {product.description && (
             <div className="mt-8">
-              <h2 className="font-display text-lg font-semibold text-ink">About this bundle</h2>
-              <p className="mt-2 whitespace-pre-line text-sm leading-relaxed text-ink-muted">{product.description}</p>
+              <h2 className="font-display text-lg font-semibold text-ink">
+                About this bundle
+              </h2>
+
+              <p className="mt-2 whitespace-pre-line text-sm leading-relaxed text-ink-muted">
+                {product.description}
+              </p>
             </div>
           )}
 
           <div className="mt-8">
-            <h2 className="font-display text-lg font-semibold text-ink">What&apos;s included</h2>
+            <h2 className="font-display text-lg font-semibold text-ink">
+              What&apos;s included
+            </h2>
+
             <ul className="mt-2 space-y-1.5 text-sm text-ink-muted">
-              <li className="flex items-center gap-2"><Check size={14} className="text-success" /> {product.reels.length} ready-to-post reels</li>
-              <li className="flex items-center gap-2"><Check size={14} className="text-success" /> Individual & batch download</li>
-              <li className="flex items-center gap-2"><Check size={14} className="text-success" /> Lifetime access from your account</li>
+              <li className="flex items-center gap-2">
+                <Check size={14} className="text-success" />
+                {product.reels.length} ready-to-post reels
+              </li>
+
+              <li className="flex items-center gap-2">
+                <Check size={14} className="text-success" />
+                Individual & batch download
+              </li>
+
+              <li className="flex items-center gap-2">
+                <Check size={14} className="text-success" />
+                Lifetime access from your account
+              </li>
             </ul>
           </div>
 
           <div className="mt-8">
-            <h2 className="font-display text-lg font-semibold text-ink">Usage & license</h2>
-            <p className="mt-2 whitespace-pre-line text-sm leading-relaxed text-ink-muted">{licenseText}</p>
+            <h2 className="font-display text-lg font-semibold text-ink">
+              Usage & license
+            </h2>
+
+            <p className="mt-2 whitespace-pre-line text-sm leading-relaxed text-ink-muted">
+              {licenseText}
+            </p>
           </div>
 
           <p className="mt-8 text-xs text-ink-faint">
-            Have a question first? <Link href="/faq" className="text-accent hover:underline">Read the FAQ</Link> or{" "}
-            <Link href="/contact" className="text-accent hover:underline">contact us</Link>.
+            Have a question first?{" "}
+            <Link
+              href="/faq"
+              className="text-accent hover:underline"
+            >
+              Read the FAQ
+            </Link>{" "}
+            or{" "}
+            <Link
+              href="/contact"
+              className="text-accent hover:underline"
+            >
+              contact us
+            </Link>
+            .
           </p>
         </div>
       </div>
@@ -169,16 +285,26 @@ function PricingRow({
   return (
     <div
       className={`flex items-center justify-between rounded-card border p-4 ${
-        highlight ? "border-accent bg-accent/10" : "border-border bg-surface"
+        highlight
+          ? "border-accent bg-accent/10"
+          : "border-border bg-surface"
       }`}
     >
       <div>
         <p className="font-medium text-ink">{label}</p>
         <p className="text-xs text-ink-muted">{note}</p>
       </div>
+
       <div className="flex items-center gap-3">
-        <span className="font-display text-lg font-semibold text-ink">{price}</span>
-        <BuyButton slug={slug} variant={variant} highlight={highlight} />
+        <span className="font-display text-lg font-semibold text-ink">
+          {price}
+        </span>
+
+        <BuyButton
+          slug={slug}
+          variant={variant}
+          highlight={highlight}
+        />
       </div>
     </div>
   );
