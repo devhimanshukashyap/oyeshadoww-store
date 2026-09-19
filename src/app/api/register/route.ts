@@ -5,6 +5,8 @@ import { registerSchema } from "@/lib/validation";
 import { apiError } from "@/lib/api-error";
 import { rateLimit, getClientIp } from "@/lib/rate-limit";
 import { logger } from "@/lib/logger";
+import { createVerificationChallenge } from "@/lib/verification";
+import { sendEmail } from "@/lib/email";
 
 export async function POST(req: NextRequest) {
   try {
@@ -37,8 +39,37 @@ export async function POST(req: NextRequest) {
       },
     });
 
+    const challenge = await createVerificationChallenge({
+      userId: user.id,
+      type: "EMAIL",
+      target: user.email,
+    });
+
+    await sendEmail({
+      to: user.email,
+      subject: "Verify your email — Oye Shadoww",
+      text: `Your Oye Shadoww verification code is ${challenge.code}. This code expires in 10 minutes.`,
+      html: `
+    <p>Hi ${user.name ?? "there"},</p>
+    <p>Thanks for creating your Oye Shadoww account.</p>
+    <p>Your email verification code is:</p>
+    <p style="font-size: 24px; font-weight: bold; letter-spacing: 4px;">
+      ${challenge.code}
+    </p>
+    <p>This code expires in 10 minutes.</p>
+    <p>If you didn't create this account, you can ignore this email.</p>
+  `,
+    });
+
     logger.info("user.registered", { userId: user.id });
-    return NextResponse.json({ ok: true });
+
+    return NextResponse.json({
+      ok: true,
+      requiresEmailVerification: true,
+      email: user.email,
+      challengeId: challenge.challengeId,
+      expiresAt: challenge.expiresAt,
+    });
   } catch (err) {
     return apiError(err);
   }

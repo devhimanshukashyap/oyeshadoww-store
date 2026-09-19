@@ -32,11 +32,36 @@ export function RegisterForm({ callbackUrl }: { callbackUrl?: string }) {
       return;
     }
 
-    const signInRes = await signIn("credentials", { email, password, redirect: false });
+    const signInRes = await signIn("credentials", {
+      email,
+      password,
+      redirect: false,
+    });
+
     setLoading(false);
 
     if (signInRes?.error) {
       router.push("/login");
+      return;
+    }
+
+    if (data.requiresEmailVerification && data.challengeId) {
+      sessionStorage.setItem(
+        "emailVerificationChallengeId",
+        data.challengeId
+      );
+
+      sessionStorage.setItem(
+        "emailVerificationAddress",
+        data.email ?? email
+      );
+
+      sessionStorage.setItem(
+        "emailVerificationCallbackUrl",
+        callbackUrl || "/purchases"
+      );
+
+      router.push("/verify-email");
       return;
     }
 
