@@ -56,7 +56,12 @@ export async function PATCH(
       targetId: extra.id,
     });
 
-    return NextResponse.json({ extra });
+    return NextResponse.json({
+      extra: {
+        ...extra,
+        fileSizeBytes: extra.fileSizeBytes?.toString() ?? null,
+      },
+    });
   } catch (err) {
     return apiError(err);
   }

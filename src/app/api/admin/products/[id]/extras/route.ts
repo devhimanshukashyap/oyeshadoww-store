@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { requireAdmin } from "@/lib/session";
 import { apiError } from "@/lib/api-error";
 import { db } from "@/lib/db";
+import { deleteObject } from "@/lib/r2";
 import { logAdminAction } from "@/server/services/audit.service";
 import { z } from "zod";
 
@@ -44,7 +45,12 @@ export async function GET(
       orderBy: [{ sortOrder: "asc" }, { createdAt: "asc" }],
     });
 
-    return NextResponse.json({ extras });
+    const serializedExtras = extras.map((extra) => ({
+      ...extra,
+      fileSizeBytes: extra.fileSizeBytes?.toString() ?? null,
+    }));
+
+    return NextResponse.json({ extras: serializedExtras });
   } catch (err) {
     return apiError(err);
   }
@@ -113,32 +119,62 @@ export async function POST(
       }
     }
 
-    const extra = await db.bundlePlusExtra.create({
-      data: {
-        productId: params.id,
-        type: body.type,
-        title: body.title,
-        description: body.description ?? null,
-        content: body.type === "TEXT" ? body.content ?? null : null,
-        storageObjectId:
-          body.type === "FILE" ? body.storageObjectId ?? null : null,
-        fileName: body.type === "FILE" ? body.fileName ?? null : null,
-        fileContentType:
-          body.type === "FILE" ? body.fileContentType ?? null : null,
-        fileSizeBytes:
-          body.type === "FILE" ? body.fileSizeBytes ?? null : null,
-        sortOrder: body.sortOrder,
+    let extra;
+
+    try {
+      extra = await db.bundlePlusExtra.create({
+        data: {
+          productId: params.id,
+          type: body.type,
+          title: body.title,
+          description: body.description ?? null,
+          content: body.type === "TEXT" ? body.content ?? null : null,
+          storageObjectId:
+            body.type === "FILE" ? body.storageObjectId ?? null : null,
+          fileName: body.type === "FILE" ? body.fileName ?? null : null,
+          fileContentType:
+            body.type === "FILE" ? body.fileContentType ?? null : null,
+          fileSizeBytes:
+            body.type === "FILE" ? body.fileSizeBytes ?? null : null,
+          sortOrder: body.sortOrder,
+        },
+      });
+
+      await logAdminAction({
+        adminId: admin.id,
+        action: "bundle_plus_extra.create",
+        targetType: "BundlePlusExtra",
+        targetId: extra.id,
+      });
+    } catch (error) {
+      // If a FILE upload reached R2 but creating the extra failed,
+      // clean up the uploaded object so it does not become orphaned.
+      if (body.type === "FILE" && storageObject) {
+        try {
+          await deleteObject(storageObject.key);
+
+          await db.storageObject.delete({
+            where: {
+              id: storageObject.id,
+            },
+          });
+        } catch (cleanupError) {
+          console.error("Failed to clean up Bundle+ extra upload:", cleanupError);
+        }
+      }
+
+      throw error;
+    }
+
+    return NextResponse.json(
+      {
+        extra: {
+          ...extra,
+          fileSizeBytes: extra.fileSizeBytes?.toString() ?? null,
+        },
       },
-    });
-
-    await logAdminAction({
-      adminId: admin.id,
-      action: "bundle_plus_extra.create",
-      targetType: "BundlePlusExtra",
-      targetId: extra.id,
-    });
-
-    return NextResponse.json({ extra }, { status: 201 });
+      { status: 201 }
+    );
   } catch (err) {
     return apiError(err);
   }
