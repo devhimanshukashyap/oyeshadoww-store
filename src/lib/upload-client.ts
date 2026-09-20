@@ -15,11 +15,13 @@ export type UploadKind =
   | "reel-clean"
   | "reel-thumbnail"
   | "thumbnail"
-  | "preview";
+  | "preview"
+  | "bundle-plus-extra";
 
 export interface UploadResult {
   ok: boolean;
   reelId?: string;
+  storageObjectId?: string;
   error?: string;
 }
 
@@ -143,7 +145,7 @@ export async function uploadFile(params: {
         if (!thumbnailPresignRes.ok) {
           throw new Error(
             thumbnailPresignData.error ??
-              "Could not prepare thumbnail upload"
+            "Could not prepare thumbnail upload"
           );
         }
 
@@ -182,7 +184,7 @@ export async function uploadFile(params: {
         if (!thumbnailCompleteRes.ok) {
           throw new Error(
             thumbnailCompleteData.error ??
-              "Could not finalize thumbnail"
+            "Could not finalize thumbnail"
           );
         }
       } catch (thumbnailError) {
@@ -198,6 +200,10 @@ export async function uploadFile(params: {
     return {
       ok: true,
       reelId: completedReelId,
+      storageObjectId:
+        params.kind === "bundle-plus-extra"
+          ? completeData.storageObjectId
+          : undefined,
     };
   } catch (err: any) {
     return {

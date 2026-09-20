@@ -4,6 +4,7 @@ import { getCurrentUser } from "@/lib/session";
 import { getSettings } from "@/lib/settings";
 import { SettingsForm } from "@/components/admin/settings-form";
 import { CategoriesManager } from "@/components/admin/categories-manager";
+import { Breadcrumbs } from "@/components/breadcrumbs";
 
 export const metadata: Metadata = { title: "Settings", robots: { index: false } };
 export const dynamic = "force-dynamic";
@@ -16,10 +17,21 @@ export default async function AdminSettingsPage() {
 
   return (
     <div className="max-w-2xl">
-      <h1 className="font-display text-2xl font-semibold text-ink">Settings</h1>
+      <Breadcrumbs
+        items={[
+          { label: "Dashboard", href: "/admin" },
+          { label: "Settings" },
+        ]}
+      />
+
+      <h1 className="font-display text-2xl font-semibold text-ink">
+        Settings
+      </h1>
+
       <p className="mt-1 text-sm text-ink-muted">
         Branding, social links, and legal text — changes apply site-wide immediately, no redeploy needed.
       </p>
+
       <div className="mt-6 space-y-6">
         <CategoriesManager />
         <SettingsForm initial={settings} />

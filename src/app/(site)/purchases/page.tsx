@@ -6,6 +6,7 @@ import { getCurrentUser } from "@/lib/session";
 import { getUserPurchases } from "@/server/services/product.service";
 import { EmptyState } from "@/components/empty-state";
 import { formatPaise, formatDate } from "@/lib/utils";
+import { Breadcrumbs } from "@/components/breadcrumbs";
 
 export const metadata: Metadata = { title: "My Purchases" };
 export const dynamic = "force-dynamic";
@@ -26,8 +27,20 @@ export default async function PurchasesPage() {
 
   return (
     <div className="container-page py-10">
-      <h1 className="font-display text-3xl font-semibold text-ink">My Purchases</h1>
-      <p className="mt-1 text-ink-muted">Everything you&apos;ve bought, ready to download.</p>
+      <Breadcrumbs
+        items={[
+          { label: "Home", href: "/" },
+          { label: "My Purchases" },
+        ]}
+      />
+
+      <h1 className="font-display text-3xl font-semibold text-ink">
+        My Purchases
+      </h1>
+
+      <p className="mt-1 text-ink-muted">
+        Everything you&apos;ve bought, ready to download.
+      </p>
 
       {byProduct.size === 0 ? (
         <div className="mt-10">
@@ -47,15 +60,36 @@ export default async function PurchasesPage() {
           {[...byProduct.entries()].map(([productId, list]) => {
             const best = list.find((p) => p.variant === "CLEAN") ?? list[0];
             const hasClean = list.some((p) => p.variant === "CLEAN");
+
             return (
-              <Link key={productId} href={`/purchases/${productId}`} className="card block p-4 transition-transform hover:-translate-y-0.5">
-                <p className="font-display text-lg font-semibold text-ink">{best.product.name}</p>
-                <p className="mt-1 text-sm text-ink-muted">
-                  {best.product._count.reels} reels · {hasClean ? "Non-watermarked" : "Watermarked"}
+              <Link
+                key={productId}
+                href={`/purchases/${productId}`}
+                className="card block p-4 transition-transform hover:-translate-y-0.5"
+              >
+                <p className="font-display text-lg font-semibold text-ink">
+                  {best.product.name}
                 </p>
-                <p className="mt-3 text-xs text-ink-faint">Purchased {formatDate(best.grantedAt)}</p>
-                <p className="mt-1 text-xs text-ink-faint">{formatPaise(best.order.totalAmountPaise, best.order.currency)}</p>
-                <span className="btn-secondary mt-4 w-full">Open bundle</span>
+
+                <p className="mt-1 text-sm text-ink-muted">
+                  {best.product._count.reels} reels ·{" "}
+                  {hasClean ? "Non-watermarked" : "Watermarked"}
+                </p>
+
+                <p className="mt-3 text-xs text-ink-faint">
+                  Purchased {formatDate(best.grantedAt)}
+                </p>
+
+                <p className="mt-1 text-xs text-ink-faint">
+                  {formatPaise(
+                    best.order.totalAmountPaise,
+                    best.order.currency
+                  )}
+                </p>
+
+                <span className="btn-secondary mt-4 w-full">
+                  Open bundle
+                </span>
               </Link>
             );
           })}

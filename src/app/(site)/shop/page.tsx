@@ -7,6 +7,7 @@ import { EmptyState } from "@/components/empty-state";
 import { listActiveCategories, listPublishedProducts } from "@/server/services/product.service";
 import { cn } from "@/lib/utils";
 import { PackageSearch } from "lucide-react";
+import { Breadcrumbs } from "@/components/breadcrumbs";
 
 export const metadata: Metadata = { title: "Shop bundles" };
 export const revalidate = 30;
@@ -21,6 +22,12 @@ export default async function ShopPage({
 
   return (
     <div className="container-page py-10">
+      <Breadcrumbs
+        items={[
+          { label: "Home", href: "/" },
+          { label: "Shop bundles" },
+        ]}
+      />
       <div className="mb-8">
         <h1 className="font-display text-3xl font-semibold text-ink">Shop bundles</h1>
         <p className="mt-1 text-ink-muted">AI-generated reel bundles, ready to download and post.</p>

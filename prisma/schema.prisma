@@ -111,6 +111,11 @@ enum ProductStatus {
   ARCHIVED
 }
 
+enum BundlePlusExtraType {
+  TEXT
+  FILE
+}
+
 model Category {
   id        String    @id @default(cuid())
   name      String
@@ -162,9 +167,10 @@ model Product {
   updatedAt DateTime  @updatedAt
   deletedAt DateTime? // soft delete — historical orders keep referencing this row
 
-  reels      Reel[]
-  orderItems OrderItem[]
-  purchases  Purchase[]
+  reels            Reel[]
+  bundlePlusExtras BundlePlusExtra[]
+  orderItems       OrderItem[]
+  purchases        Purchase[]
 
   @@index([slug])
   @@index([status, deletedAt])
@@ -174,6 +180,30 @@ model Product {
 enum Visibility {
   VISIBLE
   HIDDEN
+}
+
+model BundlePlusExtra {
+  id        String  @id @default(cuid())
+  productId String
+  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  type        BundlePlusExtraType
+  title       String
+  description String?
+  content     String?             @db.Text
+
+  storageObjectId String?        @unique
+  storageObject   StorageObject? @relation("BundlePlusExtraFile", fields: [storageObjectId], references: [id])
+
+  fileName        String?
+  fileContentType String?
+  fileSizeBytes   BigInt?
+
+  sortOrder Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([productId, sortOrder])
 }
 
 /// One reel inside a bundle. Each reel may have a watermarked file and/or a
@@ -227,8 +257,9 @@ model StorageObject {
   createdAt   DateTime            @default(now())
   updatedAt   DateTime            @updatedAt
 
-  watermarkedOf Reel? @relation("WatermarkedReel")
-  cleanOf       Reel? @relation("CleanReel")
+  watermarkedOf       Reel?            @relation("WatermarkedReel")
+  cleanOf             Reel?            @relation("CleanReel")
+  bundlePlusExtraFile BundlePlusExtra? @relation("BundlePlusExtraFile")
 
   @@index([status])
 }

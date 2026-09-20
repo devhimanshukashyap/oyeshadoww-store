@@ -15,6 +15,7 @@ const completeSchema = z.object({
     "reel-thumbnail",
     "thumbnail",
     "preview",
+    "bundle-plus-extra",
   ]),
   reelId: z.string().optional(), // attach to an existing reel
   newReelTitle: z.string().min(1).max(150).optional(), // or create a new reel with this title
@@ -38,6 +39,17 @@ export async function POST(req: NextRequest) {
     }
 
     await db.storageObject.update({ where: { id: storageObject.id }, data: { status: "READY" } });
+
+    if (body.kind === "bundle-plus-extra") {
+      return NextResponse.json({
+        ok: true,
+        storageObjectId: storageObject.id,
+        key: storageObject.key,
+        fileName: storageObject.key.split("/").pop() ?? "file",
+        fileContentType: storageObject.contentType,
+        fileSizeBytes: storageObject.sizeBytes?.toString() ?? null,
+      });
+    }
 
     if (body.kind === "thumbnail" || body.kind === "preview") {
       await db.product.update({

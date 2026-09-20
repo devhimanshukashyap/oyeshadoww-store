@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { getCurrentUser } from "@/lib/session";
 import { getHealthSnapshot } from "@/server/services/health.service";
 import { HealthDashboard } from "@/components/admin/health-dashboard";
+import { Breadcrumbs } from "@/components/breadcrumbs";
 
 export const metadata: Metadata = { title: "System Health", robots: { index: false } };
 export const dynamic = "force-dynamic";
@@ -15,6 +16,12 @@ export default async function AdminHealthPage() {
 
   return (
     <div>
+      <Breadcrumbs
+        items={[
+          { label: "Dashboard", href: "/admin" },
+          { label: "System Health" },
+        ]}
+      />
       <h1 className="font-display text-2xl font-semibold text-ink">System Health</h1>
       <p className="mt-1 text-sm text-ink-muted">
         Live checks against each dependency, plus recent activity — nothing here is reported healthy without

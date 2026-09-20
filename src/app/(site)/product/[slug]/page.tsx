@@ -8,6 +8,7 @@ import { getSettings } from "@/lib/settings";
 import { formatPaise } from "@/lib/utils";
 import { ProductDetailSkeleton } from "@/components/skeletons";
 import { BuyButton } from "@/components/buy-button";
+import { Breadcrumbs } from "@/components/breadcrumbs";
 
 export async function generateMetadata({
   params,
@@ -73,6 +74,13 @@ async function ProductDetail({ slug }: { slug: string }) {
 
   return (
     <div>
+      <Breadcrumbs
+        items={[
+          { label: "Home", href: "/" },
+          { label: "Shop bundles", href: "/shop" },
+          { label: product.name },
+        ]}
+      />
       {/* eslint-disable-next-line react/no-danger */}
       <script
         type="application/ld+json"
@@ -94,8 +102,8 @@ async function ProductDetail({ slug }: { slug: string }) {
                   poster={
                     product.thumbnailKey
                       ? `/api/media/thumbnail?key=${encodeURIComponent(
-                          product.thumbnailKey
-                        )}`
+                        product.thumbnailKey
+                      )}`
                       : undefined
                   }
                 >
@@ -284,11 +292,10 @@ function PricingRow({
 }) {
   return (
     <div
-      className={`flex items-center justify-between rounded-card border p-4 ${
-        highlight
+      className={`flex items-center justify-between rounded-card border p-4 ${highlight
           ? "border-accent bg-accent/10"
           : "border-border bg-surface"
-      }`}
+        }`}
     >
       <div>
         <p className="font-medium text-ink">{label}</p>

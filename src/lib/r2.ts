@@ -94,6 +94,14 @@ export function buildProductAssetKey(
   return `products/${productId}/${kind}/${nanoid(8)}-${sanitizeFilename(filename)}`;
 }
 
+export function buildBundlePlusExtraKey(
+  productId: string,
+  extraId: string,
+  filename: string
+): string {
+  return `products/${productId}/extras/${extraId}/${sanitizeFilename(filename)}`;
+}
+
 export function buildArchiveKey(jobId: string): string {
   return `tmp-archives/${jobId}.zip`;
 }

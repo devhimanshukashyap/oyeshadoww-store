@@ -7,6 +7,8 @@ import { db } from "@/lib/db";
 import { ProductForm } from "@/components/admin/product-form";
 import { ProductAssetUpload } from "@/components/admin/product-asset-upload";
 import { ProductReelsSection } from "@/components/admin/product-reels-section";
+import { Breadcrumbs } from "@/components/breadcrumbs";
+import { BundlePlusExtras } from "@/components/admin/bundle-plus-extras";
 
 export const metadata: Metadata = { title: "Edit Bundle", robots: { index: false } };
 export const dynamic = "force-dynamic";
@@ -19,6 +21,9 @@ export default async function EditProductPage({ params }: { params: { id: string
     db.product.findFirst({
       where: { id: params.id, deletedAt: null },
       include: {
+        bundlePlusExtras: {
+          orderBy: [{ sortOrder: "asc" }, { createdAt: "asc" }],
+        },
         reels: {
           where: { deletedAt: null },
           orderBy: { sortOrder: "asc" },
@@ -26,13 +31,23 @@ export default async function EditProductPage({ params }: { params: { id: string
         },
       },
     }),
-    db.category.findMany({ where: { deletedAt: null }, orderBy: { sortOrder: "asc" } }),
+    db.category.findMany({
+      where: { deletedAt: null },
+      orderBy: { sortOrder: "asc" },
+    }),
   ]);
 
   if (!product) notFound();
 
   return (
     <div className="max-w-3xl">
+      <Breadcrumbs
+        items={[
+          { label: "Dashboard", href: "/admin" },
+          { label: "Products", href: "/admin/products" },
+          { label: product.name },
+        ]}
+      />
       <div className="flex items-center justify-between">
         <Link href="/admin/products" className="inline-flex items-center gap-1 text-sm text-ink-muted hover:text-ink">
           <ChevronLeft size={16} /> Products
@@ -74,6 +89,18 @@ export default async function EditProductPage({ params }: { params: { id: string
               seoDescription: product.seoDescription ?? "",
               licenseText: product.licenseText ?? "",
             }}
+          />
+          <BundlePlusExtras
+            productId={product.id}
+            initialExtras={product.bundlePlusExtras.map((extra) => ({
+              id: extra.id,
+              type: extra.type,
+              title: extra.title,
+              description: extra.description,
+              content: extra.content,
+              sortOrder: extra.sortOrder,
+              fileName: extra.fileName,
+            }))}
           />
         </div>
 

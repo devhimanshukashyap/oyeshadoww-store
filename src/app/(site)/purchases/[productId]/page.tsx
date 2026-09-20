@@ -5,6 +5,7 @@ import { getCurrentUser } from "@/lib/session";
 import { getPurchasedProductDetail } from "@/server/services/product.service";
 import { PurchasedReelView } from "@/components/purchased-reel-view";
 import { ChevronLeft } from "lucide-react";
+import { Breadcrumbs } from "@/components/breadcrumbs";
 
 export const metadata: Metadata = { title: "Your bundle" };
 export const dynamic = "force-dynamic";
@@ -28,12 +29,13 @@ export default async function PurchaseDetailPage({
 
   return (
     <div className="container-page py-10">
-      <Link
-        href="/purchases"
-        className="inline-flex items-center gap-1 text-sm text-ink-muted hover:text-ink"
-      >
-        <ChevronLeft size={16} /> My Purchases
-      </Link>
+      <Breadcrumbs
+        items={[
+          { label: "Home", href: "/" },
+          { label: "My Purchases", href: "/purchases" },
+          { label: product.name },
+        ]}
+      />
 
       <div className="mt-4">
         <h1 className="font-display text-3xl font-semibold text-ink">
