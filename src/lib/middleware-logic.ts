@@ -19,6 +19,14 @@ export function resolveMiddlewareAction(pathname: string, token: MiddlewareToken
   const isLoggedIn = !!token;
   const isAdmin = token?.role === "ADMIN";
 
+  // --- Admin authentication endpoints must be reachable before login ---
+  if (
+    pathname === "/api/admin/auth/start" ||
+    pathname === "/api/admin/auth/verify"
+  ) {
+    return { type: "next" };
+  }
+
   // --- Admin API routes: JSON only, never a redirect ---
   if (pathname.startsWith("/api/admin")) {
     if (!isLoggedIn) return { type: "json", status: 401 };
