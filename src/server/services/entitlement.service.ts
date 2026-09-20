@@ -159,3 +159,56 @@ async function entitlementForProduct(
 
   return { authorized: true as const, variant };
 }
+
+export async function resolveBundlePlusExtraAccess(params: {
+  userId: string;
+  productId: string;
+  extraId: string;
+}) {
+  const entitlement = await entitlementForProduct(
+    params.userId,
+    params.productId,
+    "CLEAN"
+  );
+
+  if (!entitlement.authorized) {
+    return entitlement;
+  }
+
+  const extra = await db.bundlePlusExtra.findFirst({
+    where: {
+      id: params.extraId,
+      productId: params.productId,
+    },
+    include: {
+      storageObject: true,
+    },
+  });
+
+  if (!extra) {
+    return {
+      authorized: false as const,
+      reason: "NOT_FOUND" as const,
+    };
+  }
+
+  if (extra.type !== "FILE" || !extra.storageObject) {
+    return {
+      authorized: false as const,
+      reason: "NOT_FOUND" as const,
+    };
+  }
+
+  if (extra.storageObject.status !== "READY") {
+    return {
+      authorized: false as const,
+      reason: "NOT_FOUND" as const,
+    };
+  }
+
+  return {
+    authorized: true as const,
+    extra,
+    storageObject: extra.storageObject,
+  };
+}

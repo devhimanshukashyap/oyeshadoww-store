@@ -65,6 +65,34 @@ export default async function CheckoutPage({
         </div>
       </div>
 
+      <div className="mt-5 border-t border-border pt-5">
+        <h2 className="font-display text-sm font-semibold text-ink">
+          What’s included
+        </h2>
+
+        <ul className="mt-3 space-y-2 text-sm text-ink-muted">
+          <li>
+            • {product.reels.length} {product.reels.length === 1 ? "reel" : "reels"}
+          </li>
+
+          {variant === "WATERMARKED" ? (
+            <li>• Watermarked, ready-to-post videos</li>
+          ) : (
+            <>
+              <li>• Non-watermarked, clean videos</li>
+              <li>• Future Bundle+ updates</li>
+
+              {product._count.bundlePlusExtras > 0 && (
+                <li>
+                  • {product._count.bundlePlusExtras} premium{" "}
+                  {product._count.bundlePlusExtras === 1 ? "extra" : "extras"}
+                </li>
+              )}
+            </>
+          )}
+        </ul>
+      </div>
+
       <CheckoutPanel
         productId={product.id}
         productName={product.name}

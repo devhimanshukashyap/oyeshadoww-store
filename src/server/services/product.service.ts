@@ -25,9 +25,16 @@ export async function getPublishedProductBySlug(slug: string) {
     where: { slug, status: "PUBLISHED", deletedAt: null },
     include: {
       category: true,
+
       reels: {
         where: { deletedAt: null, visibility: "VISIBLE" },
         orderBy: { sortOrder: "asc" },
+      },
+
+      _count: {
+        select: {
+          bundlePlusExtras: true,
+        },
       },
     },
   });
@@ -56,6 +63,7 @@ export async function getPurchasedProductDetail(userId: string, productId: strin
     where: { userId, productId, status: "ACTIVE" },
     include: { order: true },
   });
+
   const paid = purchases.filter((p) => p.order.status === "PAID");
   if (paid.length === 0) return null;
 
@@ -68,8 +76,36 @@ export async function getPurchasedProductDetail(userId: string, productId: strin
       },
     },
   });
+
   if (!product) return null;
 
   const ownedVariants = paid.map((p) => p.variant);
-  return { product, ownedVariants };
+  const hasBundlePlus = ownedVariants.includes("CLEAN");
+
+  const bundlePlusExtras = hasBundlePlus
+    ? await db.bundlePlusExtra.findMany({
+      where: { productId },
+      orderBy: [{ sortOrder: "asc" }, { createdAt: "asc" }],
+      select: {
+        id: true,
+        type: true,
+        title: true,
+        description: true,
+        content: true,
+        fileName: true,
+        fileContentType: true,
+        fileSizeBytes: true,
+        sortOrder: true,
+      },
+    })
+    : [];
+
+  return {
+    product,
+    ownedVariants,
+    bundlePlusExtras: bundlePlusExtras.map((extra) => ({
+      ...extra,
+      fileSizeBytes: extra.fileSizeBytes?.toString() ?? null,
+    })),
+  };
 }
