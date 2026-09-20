@@ -9,8 +9,14 @@ const db = new PrismaClient();
  * password you've already changed.
  */
 async function main() {
-  const adminEmail = (process.env.SEED_ADMIN_EMAIL ?? "admin@oyeshadoww.com").toLowerCase();
-  const adminPassword = process.env.SEED_ADMIN_PASSWORD ?? "ChangeMe123!";
+  const adminEmail = process.env.SEED_ADMIN_EMAIL?.trim().toLowerCase();
+  const adminPassword = process.env.SEED_ADMIN_PASSWORD;
+
+  if (!adminEmail || !adminPassword) {
+    throw new Error(
+      "SEED_ADMIN_EMAIL and SEED_ADMIN_PASSWORD must be set before running the seed."
+    );
+  }
 
   const existingAdmin = await db.user.findUnique({ where: { email: adminEmail } });
   if (!existingAdmin) {

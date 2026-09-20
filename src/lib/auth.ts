@@ -18,6 +18,7 @@ import { logger } from "@/lib/logger";
 
 const MAX_FAILED_ATTEMPTS = 8;
 const LOCKOUT_MINUTES = 15;
+const ADMIN_CHALLENGE_MAX_AGE_MINUTES = 10;
 
 export const authOptions: NextAuthOptions = {
   session: { strategy: "jwt" },
@@ -30,6 +31,10 @@ export const authOptions: NextAuthOptions = {
       credentials: {
         email: { label: "Email", type: "email" },
         password: { label: "Password", type: "password" },
+        adminChallengeId: {
+          label: "Admin challenge",
+          type: "text",
+        },
       },
       async authorize(credentials) {
         const email = credentials?.email?.trim().toLowerCase();
@@ -61,6 +66,53 @@ export const authOptions: NextAuthOptions = {
           });
           logger.warn("auth.login_failed", { userId: user.id, failedLoginCount });
           return null;
+        }
+
+        if (user.role === "ADMIN") {
+          const adminChallengeId =
+            typeof credentials?.adminChallengeId === "string"
+              ? credentials.adminChallengeId.trim()
+              : "";
+
+          if (!adminChallengeId) {
+            throw new Error("Admin verification required.");
+          }
+
+          const challenge = await db.adminLoginChallenge.findFirst({
+            where: {
+              id: adminChallengeId,
+              userId: user.id,
+              verifiedAt: {
+                not: null,
+              },
+              usedAt: null,
+              expiresAt: {
+                gt: new Date(),
+              },
+            },
+          });
+
+          if (!challenge) {
+            throw new Error("Admin verification required.");
+          }
+
+          const verifiedAt = challenge.verifiedAt!.getTime();
+
+          if (
+            Date.now() - verifiedAt >
+            ADMIN_CHALLENGE_MAX_AGE_MINUTES * 60 * 1000
+          ) {
+            throw new Error("Admin verification expired.");
+          }
+
+          await db.adminLoginChallenge.update({
+            where: {
+              id: challenge.id,
+            },
+            data: {
+              usedAt: new Date(),
+            },
+          });
         }
 
         await db.user.update({
