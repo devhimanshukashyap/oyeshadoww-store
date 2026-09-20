@@ -8,7 +8,7 @@ import { logAdminAction } from "@/server/services/audit.service";
 
 const completeSchema = z.object({
   storageObjectId: z.string().min(1),
-  productId: z.string().min(1),
+  productId: z.string().optional(),
   kind: z.enum([
     "reel-watermarked",
     "reel-clean",
@@ -16,6 +16,7 @@ const completeSchema = z.object({
     "thumbnail",
     "preview",
     "bundle-plus-extra",
+    "hero-video",
   ]),
   reelId: z.string().optional(), // attach to an existing reel
   newReelTitle: z.string().min(1).max(150).optional(), // or create a new reel with this title
@@ -39,6 +40,26 @@ export async function POST(req: NextRequest) {
     }
 
     await db.storageObject.update({ where: { id: storageObject.id }, data: { status: "READY" } });
+
+    if (body.kind === "hero-video") {
+      if (!storageObject.key.startsWith("site/hero/")) {
+        await db.storageObject.update({
+          where: { id: storageObject.id },
+          data: { status: "FAILED" },
+        });
+
+        return NextResponse.json(
+          { error: "Invalid hero video upload." },
+          { status: 422 }
+        );
+      }
+
+      return NextResponse.json({
+        ok: true,
+        storageObjectId: storageObject.id,
+        key: storageObject.key,
+      });
+    }
 
     if (body.kind === "bundle-plus-extra") {
       return NextResponse.json({

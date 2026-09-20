@@ -16,12 +16,14 @@ export type UploadKind =
   | "reel-thumbnail"
   | "thumbnail"
   | "preview"
-  | "bundle-plus-extra";
+  | "bundle-plus-extra"
+  | "hero-video";
 
 export interface UploadResult {
   ok: boolean;
   reelId?: string;
   storageObjectId?: string;
+  key?: string;
   error?: string;
 }
 
@@ -200,10 +202,8 @@ export async function uploadFile(params: {
     return {
       ok: true,
       reelId: completedReelId,
-      storageObjectId:
-        params.kind === "bundle-plus-extra"
-          ? completeData.storageObjectId
-          : undefined,
+      storageObjectId: completeData.storageObjectId,
+      key: completeData.key,
     };
   } catch (err: any) {
     return {

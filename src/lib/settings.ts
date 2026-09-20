@@ -19,6 +19,11 @@ export interface SiteSettings {
   facebookUrl: string;
   contactEmail: string;
   currency: string;
+
+  heroPreviewType: "PRODUCT" | "VIDEO" | "NONE";
+  heroPreviewProductId: string | null;
+  heroPreviewVideoKey: string | null;
+
   footerText: string;
   defaultLicenseText: string;
   termsText: string;
@@ -50,6 +55,9 @@ export const DEFAULT_SETTINGS: SiteSettings = {
   refundPolicyText:
     "Placeholder Refund & Cancellation Policy. Digital products are generally non-refundable once downloaded; " +
     "edit this from Admin → Settings → Legal to reflect your actual policy.",
+  heroPreviewType: "NONE",
+  heroPreviewProductId: null,
+  heroPreviewVideoKey: null,
   maintenanceMode: false,
   maintenanceMessage: "We'll be back shortly. Thanks for your patience.",
 };

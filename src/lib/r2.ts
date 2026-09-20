@@ -102,6 +102,10 @@ export function buildBundlePlusExtraKey(
   return `products/${productId}/extras/${extraId}/${sanitizeFilename(filename)}`;
 }
 
+export function buildHeroVideoKey(filename: string): string {
+  return `site/hero/${nanoid(8)}-${sanitizeFilename(filename)}`;
+}
+
 export function buildArchiveKey(jobId: string): string {
   return `tmp-archives/${jobId}.zip`;
 }

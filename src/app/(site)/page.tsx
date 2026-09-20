@@ -1,11 +1,13 @@
 import { Suspense } from "react";
 import Link from "next/link";
-import { ShieldCheck, Zap, Download, Play } from "lucide-react";
+import { ShieldCheck, Zap, Download} from "lucide-react";
 import { ProductCard } from "@/components/product-card";
 import { ProductGridSkeleton } from "@/components/skeletons";
 import { listPublishedProducts } from "@/server/services/product.service";
 import { getSettings } from "@/lib/settings";
 import type { Metadata } from "next";
+import { createDownloadUrl } from "@/lib/r2";
+import { db } from "@/lib/db";
 
 export const metadata: Metadata = {
   title: "AI reel bundles, ready to post",
@@ -16,9 +18,42 @@ export const revalidate = 60;
 export default async function HomePage() {
   const settings = await getSettings();
 
+  let heroPreviewUrl: string | null = null;
+
+  if (settings.heroPreviewType === "VIDEO" && settings.heroPreviewVideoKey) {
+    heroPreviewUrl = await createDownloadUrl({
+      key: settings.heroPreviewVideoKey,
+      expiresInSeconds: 300,
+    });
+  }
+
+  if (settings.heroPreviewType === "PRODUCT" && settings.heroPreviewProductId) {
+    const product = await db.product.findFirst({
+      where: {
+        id: settings.heroPreviewProductId,
+        status: "PUBLISHED",
+        deletedAt: null,
+      },
+      select: {
+        previewVideoKey: true,
+      },
+    });
+
+    if (product?.previewVideoKey) {
+      heroPreviewUrl = await createDownloadUrl({
+        key: product.previewVideoKey,
+        expiresInSeconds: 300,
+      });
+    }
+  }
+
   return (
     <div>
-      <Hero brandHandle={settings.brandHandle} tagline={settings.tagline} />
+      <Hero
+        brandHandle={settings.brandHandle}
+        tagline={settings.tagline}
+        heroPreviewUrl={heroPreviewUrl}
+      />
 
       <section className="container-page py-16">
         <div className="mb-8 flex items-end justify-between">
@@ -79,7 +114,15 @@ async function FeaturedProducts() {
   );
 }
 
-function Hero({ brandHandle, tagline }: { brandHandle: string; tagline: string }) {
+function Hero({
+  brandHandle,
+  tagline,
+  heroPreviewUrl,
+}: {
+  brandHandle: string;
+  tagline: string;
+  heroPreviewUrl: string | null;
+}) {
   return (
     <section className="container-page grid items-center gap-10 py-12 md:grid-cols-2 md:py-20">
       <div>
@@ -102,20 +145,28 @@ function Hero({ brandHandle, tagline }: { brandHandle: string; tagline: string }
         </div>
       </div>
 
-      <div className="relative mx-auto w-full max-w-[280px]">
-        <div className="aspect-[9/16] w-full overflow-hidden rounded-[2rem] border border-border bg-gradient-to-b from-surface-raised to-surface shadow-panel">
-          <div className="flex h-full w-full flex-col items-center justify-center gap-3 text-ink-faint">
-            <div className="flex h-16 w-16 items-center justify-center rounded-full bg-accent/15 text-accent">
-              <Play size={26} fill="currentColor" />
-            </div>
-            <p className="text-xs">Vertical reel preview</p>
+      {heroPreviewUrl && (
+        <div className="relative mx-auto hidden w-full max-w-[280px] md:block">
+          <div className="aspect-[9/16] w-full overflow-hidden rounded-[2rem] border border-border bg-surface shadow-panel">
+            <video
+              src={heroPreviewUrl}
+              autoPlay
+              muted
+              loop
+              playsInline
+              preload="metadata"
+              className="h-full w-full object-cover"
+            />
+          </div>
+
+          <div className="absolute -right-6 -top-4 hidden rounded-2xl border border-border bg-surface px-4 py-3 shadow-panel sm:block">
+            <p className="text-xs text-ink-muted">Preview</p>
+            <p className="font-display text-lg font-semibold text-ink">
+              Watch reel
+            </p>
           </div>
         </div>
-        <div className="absolute -right-6 -top-4 hidden rounded-2xl border border-border bg-surface px-4 py-3 shadow-panel sm:block">
-          <p className="text-xs text-ink-muted">Non-watermarked</p>
-          <p className="font-display text-lg font-semibold text-ink">₹139</p>
-        </div>
-      </div>
+      )}
     </section>
   );
 }

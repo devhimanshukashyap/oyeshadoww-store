@@ -81,7 +81,15 @@ export const reelUpsertSchema = z.object({
 export const uploadUrlRequestSchema = z.object({
   productId: z.string().min(1),
   reelId: z.string().min(1).optional(), // omitted when creating a new reel
-  kind: z.enum(["reel-watermarked", "reel-clean", "reel-thumbnail", "thumbnail", "bundle-plus-extra", "preview"]),
+  kind: z.enum([
+    "reel-watermarked",
+    "reel-clean",
+    "reel-thumbnail",
+    "thumbnail",
+    "bundle-plus-extra",
+    "preview",
+    "hero-video",
+  ]),
   filename: z.string().min(1).max(200),
   contentType: z.string().min(1).max(100),
   sizeBytes: z.number().int().positive(),

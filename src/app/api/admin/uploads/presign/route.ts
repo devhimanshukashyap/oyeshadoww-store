@@ -9,6 +9,7 @@ import {
   MAX_IMAGE_BYTES,
   MAX_VIDEO_BYTES,
   buildBundlePlusExtraKey,
+  buildHeroVideoKey,
   buildProductAssetKey,
   buildReelKey,
   buildReelThumbnailKey,
@@ -33,7 +34,8 @@ export async function POST(req: NextRequest) {
     const isVideo =
       body.kind === "reel-watermarked" ||
       body.kind === "reel-clean" ||
-      body.kind === "preview";
+      body.kind === "preview" ||
+      body.kind === "hero-video";
 
     const isBundlePlusExtra = body.kind === "bundle-plus-extra";
 
@@ -67,32 +69,46 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const product = await db.product.findFirst({ where: { id: body.productId, deletedAt: null } });
-    if (!product) return NextResponse.json({ error: "Product not found" }, { status: 404 });
+    const isHeroVideo = body.kind === "hero-video";
+
+    const product = isHeroVideo
+      ? null
+      : await db.product.findFirst({
+        where: { id: body.productId, deletedAt: null },
+      });
+
+    if (!isHeroVideo && !product) {
+      return NextResponse.json(
+        { error: "Product not found" },
+        { status: 404 }
+      );
+    }
 
     const reelId = body.reelId ?? `pending-${nanoid(12)}`;
 
     const key =
-      body.kind === "bundle-plus-extra"
-        ? buildBundlePlusExtraKey(
-          product.id,
-          nanoid(12),
-          body.filename
-        )
-        : body.kind === "reel-thumbnail"
-          ? buildReelThumbnailKey(product.id, reelId)
-          : isVideo
-            ? buildReelKey(
-              product.id,
-              reelId,
-              body.kind === "reel-watermarked" ? "watermarked" : "clean",
-              body.filename
-            )
-            : buildProductAssetKey(
-              product.id,
-              body.kind === "thumbnail" ? "thumbnail" : "preview",
-              body.filename
-            );
+      body.kind === "hero-video"
+        ? buildHeroVideoKey(body.filename)
+        : body.kind === "bundle-plus-extra"
+          ? buildBundlePlusExtraKey(
+            product!.id,
+            nanoid(12),
+            body.filename
+          )
+          : body.kind === "reel-thumbnail"
+            ? buildReelThumbnailKey(product!.id, reelId)
+            : isVideo
+              ? buildReelKey(
+                product!.id,
+                reelId,
+                body.kind === "reel-watermarked" ? "watermarked" : "clean",
+                body.filename
+              )
+              : buildProductAssetKey(
+                product!.id,
+                body.kind === "thumbnail" ? "thumbnail" : "preview",
+                body.filename
+              );
 
     const storageObject = await db.storageObject.create({
       data: {
