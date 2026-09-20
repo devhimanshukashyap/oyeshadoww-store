@@ -161,21 +161,6 @@ function Hero({
           <span className="inline-flex items-center gap-1.5"><Zap size={14} /> Instant access</span>
         </div>
       </div>
-
-      {heroPreviewUrl && (
-        <div className="relative mx-auto hidden w-full max-w-[280px] md:block">
-          <div className="aspect-[9/16] w-full overflow-hidden rounded-[2rem] border border-border bg-surface shadow-panel">
-            <video
-              src={heroPreviewUrl}
-              autoPlay
-              muted
-              loop
-              playsInline
-              preload="metadata"
-              className="h-full w-full object-cover"
-            />
-          </div>
-
           {heroPreviewUrl && (
             <div className="relative mx-auto hidden w-full max-w-[280px] md:block">
               <Link
@@ -216,8 +201,6 @@ function Hero({
               </Link>
             </div>
           )}
-        </div>
-      )}
     </section>
   );
 }
