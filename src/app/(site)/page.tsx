@@ -1,6 +1,6 @@
 import { Suspense } from "react";
 import Link from "next/link";
-import { ShieldCheck, Zap, Download} from "lucide-react";
+import { ShieldCheck, Zap, Download } from "lucide-react";
 import { ProductCard } from "@/components/product-card";
 import { ProductGridSkeleton } from "@/components/skeletons";
 import { listPublishedProducts } from "@/server/services/product.service";
@@ -19,6 +19,10 @@ export default async function HomePage() {
   const settings = await getSettings();
 
   let heroPreviewUrl: string | null = null;
+  let heroPreviewProduct: {
+    name: string;
+    slug: string;
+  } | null = null;
 
   if (settings.heroPreviewType === "VIDEO" && settings.heroPreviewVideoKey) {
     heroPreviewUrl = await createDownloadUrl({
@@ -35,6 +39,8 @@ export default async function HomePage() {
         deletedAt: null,
       },
       select: {
+        name: true,
+        slug: true,
         previewVideoKey: true,
       },
     });
@@ -44,6 +50,11 @@ export default async function HomePage() {
         key: product.previewVideoKey,
         expiresInSeconds: 300,
       });
+
+      heroPreviewProduct = {
+        name: product.name,
+        slug: product.slug,
+      };
     }
   }
 
@@ -53,6 +64,7 @@ export default async function HomePage() {
         brandHandle={settings.brandHandle}
         tagline={settings.tagline}
         heroPreviewUrl={heroPreviewUrl}
+        heroPreviewProduct={heroPreviewProduct}
       />
 
       <section className="container-page py-16">
@@ -118,10 +130,15 @@ function Hero({
   brandHandle,
   tagline,
   heroPreviewUrl,
+  heroPreviewProduct,
 }: {
   brandHandle: string;
   tagline: string;
   heroPreviewUrl: string | null;
+  heroPreviewProduct: {
+    name: string;
+    slug: string;
+  } | null;
 }) {
   return (
     <section className="container-page grid items-center gap-10 py-12 md:grid-cols-2 md:py-20">
@@ -159,12 +176,46 @@ function Hero({
             />
           </div>
 
-          <div className="absolute -right-6 -top-4 hidden rounded-2xl border border-border bg-surface px-4 py-3 shadow-panel sm:block">
-            <p className="text-xs text-ink-muted">Preview</p>
-            <p className="font-display text-lg font-semibold text-ink">
-              Watch reel
-            </p>
-          </div>
+          {heroPreviewUrl && (
+            <div className="relative mx-auto hidden w-full max-w-[280px] md:block">
+              <Link
+                href={
+                  heroPreviewProduct
+                    ? `/product/${heroPreviewProduct.slug}`
+                    : "/shop"
+                }
+                className="group block"
+              >
+                <div className="aspect-[9/16] w-full overflow-hidden rounded-[2rem] border border-border bg-surface shadow-panel transition group-hover:shadow-lg">
+                  <video
+                    src={heroPreviewUrl}
+                    autoPlay
+                    muted
+                    loop
+                    playsInline
+                    preload="metadata"
+                    className="h-full w-full object-cover transition group-hover:scale-[1.01]"
+                  />
+                </div>
+
+                {heroPreviewProduct && (
+                  <div className="absolute bottom-4 left-4 right-4 rounded-2xl border border-white/20 bg-black/60 px-4 py-3 text-white backdrop-blur-md">
+                    <p className="text-xs text-white/70">
+                      Featured bundle
+                    </p>
+
+                    <p className="mt-0.5 truncate font-display text-base font-semibold">
+                      {heroPreviewProduct.name}
+                    </p>
+
+                    <p className="mt-1 text-xs text-white/80">
+                      View bundle →
+                    </p>
+                  </div>
+                )}
+              </Link>
+            </div>
+          )}
         </div>
       )}
     </section>
