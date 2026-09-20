@@ -1,3 +1,4 @@
+import crypto from "crypto";
 import bcrypt from "bcryptjs";
 import { db } from "@/lib/db";
 import { hashPassword } from "@/lib/auth";
@@ -78,5 +79,127 @@ export async function getUserDownloadHistory(userId: string, limit = 15) {
     include: { reel: true },
     orderBy: { createdAt: "desc" },
     take: limit,
+  });
+}
+
+const PASSWORD_RESET_EXPIRY_MINUTES = 30;
+
+export async function createPasswordResetToken(email: string) {
+  const normalizedEmail = email.trim().toLowerCase();
+
+  const user = await db.user.findUnique({
+    where: { email: normalizedEmail },
+  });
+
+  if (!user) {
+    return null;
+  }
+
+  // Invalidate any previous unused reset tokens.
+  await db.passwordResetToken.updateMany({
+    where: {
+      userId: user.id,
+      usedAt: null,
+    },
+    data: {
+      usedAt: new Date(),
+    },
+  });
+
+  const rawToken = crypto.randomBytes(32).toString("hex");
+  const tokenHash = crypto
+    .createHash("sha256")
+    .update(rawToken)
+    .digest("hex");
+
+  const resetToken = await db.passwordResetToken.create({
+    data: {
+      userId: user.id,
+      tokenHash,
+      expiresAt: new Date(
+        Date.now() + PASSWORD_RESET_EXPIRY_MINUTES * 60 * 1000
+      ),
+    },
+  });
+
+  logger.info("account.password_reset_requested", {
+    userId: user.id,
+  });
+
+  return {
+    token: rawToken,
+    expiresAt: resetToken.expiresAt,
+    userId: user.id,
+    email: user.email,
+    name: user.name,
+  };
+}
+
+export async function resetPassword(
+  rawToken: string,
+  newPassword: string
+) {
+  const tokenHash = crypto
+    .createHash("sha256")
+    .update(rawToken)
+    .digest("hex");
+
+  const resetToken = await db.passwordResetToken.findUnique({
+    where: { tokenHash },
+  });
+
+  if (!resetToken) {
+    throw new AccountError("This password reset link is invalid.", 400);
+  }
+
+  if (resetToken.usedAt) {
+    throw new AccountError(
+      "This password reset link has already been used.",
+      400
+    );
+  }
+
+  if (resetToken.expiresAt.getTime() <= Date.now()) {
+    throw new AccountError(
+      "This password reset link has expired.",
+      400
+    );
+  }
+
+  const passwordHash = await hashPassword(newPassword);
+
+  await db.$transaction([
+    db.user.update({
+      where: { id: resetToken.userId },
+      data: {
+        passwordHash,
+        failedLoginCount: 0,
+        lockedUntil: null,
+      },
+    }),
+
+    db.passwordResetToken.update({
+      where: { id: resetToken.id },
+      data: {
+        usedAt: new Date(),
+      },
+    }),
+
+    db.passwordResetToken.updateMany({
+      where: {
+        userId: resetToken.userId,
+        usedAt: null,
+        id: {
+          not: resetToken.id,
+        },
+      },
+      data: {
+        usedAt: new Date(),
+      },
+    }),
+  ]);
+
+  logger.info("account.password_reset_completed", {
+    userId: resetToken.userId,
   });
 }

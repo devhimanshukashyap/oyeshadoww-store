@@ -59,6 +59,14 @@ export function LoginForm({ callbackUrl }: { callbackUrl?: string }) {
           onChange={(e) => setPassword(e.target.value)}
           className="input"
         />
+        <div className="flex justify-end">
+          <a
+            href="/forgot-password"
+            className="text-sm text-ink-muted transition hover:text-ink"
+          >
+            Forgot password?
+          </a>
+        </div>
       </div>
       {error && <p role="alert" className="text-sm text-danger">{error}</p>}
       <button type="submit" disabled={loading} className="btn-primary w-full py-3.5">
