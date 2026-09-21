@@ -10,6 +10,7 @@ import {
   Settings,
   Activity,
   ExternalLink,
+  UserCircle,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Logo } from "@/components/logo";
@@ -20,6 +21,7 @@ const links = [
   { href: "/admin/orders", label: "Orders", Icon: ShoppingCart },
   { href: "/admin/customers", label: "Customers", Icon: Users },
   { href: "/admin/settings", label: "Settings", Icon: Settings },
+  { href: "/admin/account", label: "Account", Icon: UserCircle },
   { href: "/admin/health", label: "System Health", Icon: Activity },
 ];
 

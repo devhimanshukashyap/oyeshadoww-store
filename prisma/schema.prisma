@@ -53,6 +53,7 @@ model User {
   failedLoginCount Int       @default(0)
   lockedUntil      DateTime?
   lastLoginAt      DateTime?
+  sessionVersion Int @default(0)
 
   orders                 Order[]
   purchases              Purchase[]

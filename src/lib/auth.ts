@@ -120,7 +120,7 @@ export const authOptions: NextAuthOptions = {
           data: { failedLoginCount: 0, lockedUntil: null, lastLoginAt: new Date() },
         });
 
-        return { id: user.id, email: user.email, name: user.name ?? undefined, role: user.role };
+        return { id: user.id, email: user.email, name: user.name ?? undefined, role: user.role, sessionVersion: user.sessionVersion, };
       },
     }),
   ],
@@ -129,6 +129,7 @@ export const authOptions: NextAuthOptions = {
       if (user) {
         token.role = (user as any).role;
         token.uid = (user as any).id;
+        token.sessionVersion = (user as any).sessionVersion;
       }
       // Lets the client explicitly refresh the session's name/email right
       // after a profile update (see useSession().update() calls in the

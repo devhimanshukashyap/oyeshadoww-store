@@ -1,5 +1,6 @@
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
+import { db } from "@/lib/db";
 
 /**
  * Central helpers for "who is calling this?" checks. Every API route and
@@ -12,7 +13,44 @@ import { authOptions } from "@/lib/auth";
 
 export async function getCurrentUser() {
   const session = await getServerSession(authOptions);
-  return session?.user ?? null;
+
+  if (!session?.user?.id) {
+    return null;
+  }
+
+  const user = await db.user.findUnique({
+    where: {
+      id: session.user.id,
+    },
+    select: {
+      id: true,
+      name: true,
+      email: true,
+      role: true,
+      sessionVersion: true,
+    },
+  });
+
+  if (!user) {
+    return null;
+  }
+
+  const tokenVersion = (session.user as { sessionVersion?: number })
+    .sessionVersion;
+
+  if (
+    typeof tokenVersion !== "number" ||
+    tokenVersion !== user.sessionVersion
+  ) {
+    return null;
+  }
+
+  return {
+    id: user.id,
+    name: user.name,
+    email: user.email,
+    role: user.role,
+  };
 }
 
 export class UnauthorizedError extends Error {

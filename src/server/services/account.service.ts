@@ -12,6 +12,32 @@ export class AccountError extends Error {
   }
 }
 
+export async function getAdminAccount(userId: string) {
+  const user = await db.user.findUnique({
+    where: {
+      id: userId,
+      role: "ADMIN",
+    },
+    select: {
+      id: true,
+      name: true,
+      email: true,
+      role: true,
+      emailVerifiedAt: true,
+      createdAt: true,
+      lastLoginAt: true,
+      failedLoginCount: true,
+      lockedUntil: true,
+    },
+  });
+
+  if (!user) {
+    throw new AccountError("Admin account not found", 404);
+  }
+
+  return user;
+}
+
 export async function updateProfileName(userId: string, name: string) {
   const user = await db.user.update({ where: { id: userId }, data: { name } });
   logger.info("account.name_updated", { userId });
@@ -48,6 +74,64 @@ export async function changeEmail(userId: string, newEmail: string, currentPassw
   return { email: normalized };
 }
 
+export async function changeAdminEmail(
+  userId: string,
+  newEmail: string,
+  currentPassword: string
+) {
+  const user = await db.user.findUnique({
+    where: {
+      id: userId,
+      role: "ADMIN",
+    },
+  });
+
+  if (!user) {
+    throw new AccountError("Admin account not found", 404);
+  }
+
+  const valid = await bcrypt.compare(
+    currentPassword,
+    user.passwordHash
+  );
+
+  if (!valid) {
+    throw new AccountError("Current password is incorrect", 401);
+  }
+
+  const normalized = newEmail.trim().toLowerCase();
+
+  if (!normalized || !normalized.includes("@")) {
+    throw new AccountError("Enter a valid email address", 400);
+  }
+
+  if (normalized === user.email) {
+    throw new AccountError(
+      "That's already your current email address",
+      409
+    );
+  }
+
+  const existing = await db.user.findUnique({
+    where: {
+      email: normalized,
+    },
+  });
+
+  if (existing) {
+    throw new AccountError(
+      "That email address can't be used",
+      409
+    );
+  }
+
+  return {
+    userId: user.id,
+    currentEmail: user.email,
+    newEmail: normalized,
+  };
+}
+
 export async function changePassword(userId: string, currentPassword: string, newPassword: string) {
   const user = await db.user.findUnique({ where: { id: userId } });
   if (!user) throw new AccountError("Account not found", 404);
@@ -58,7 +142,14 @@ export async function changePassword(userId: string, currentPassword: string, ne
   const passwordHash = await hashPassword(newPassword);
   await db.user.update({
     where: { id: userId },
-    data: { passwordHash, failedLoginCount: 0, lockedUntil: null },
+    data: {
+      passwordHash,
+      failedLoginCount: 0,
+      lockedUntil: null,
+      sessionVersion: {
+        increment: 1,
+      },
+    },
   });
   logger.info("account.password_changed", { userId });
 }
@@ -175,6 +266,9 @@ export async function resetPassword(
         passwordHash,
         failedLoginCount: 0,
         lockedUntil: null,
+        sessionVersion: {
+          increment: 1,
+        },
       },
     }),
 

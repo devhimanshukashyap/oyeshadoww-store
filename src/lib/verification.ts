@@ -195,3 +195,126 @@ export async function verifyChallenge(params: {
         target: challenge.target,
     } as const;
 }
+
+export async function verifyAdminEmailChangeChallenge(params: {
+    userId: string;
+    challengeId: string;
+    code: string;
+}) {
+    const challenge = await db.verificationChallenge.findFirst({
+        where: {
+            id: params.challengeId,
+            userId: params.userId,
+            type: "EMAIL",
+        },
+    });
+
+    if (!challenge) {
+        return {
+            success: false,
+            reason: "INVALID",
+        } as const;
+    }
+
+    if (challenge.usedAt) {
+        return {
+            success: false,
+            reason: "ALREADY_USED",
+        } as const;
+    }
+
+    if (challenge.expiresAt.getTime() <= Date.now()) {
+        return {
+            success: false,
+            reason: "EXPIRED",
+        } as const;
+    }
+
+    if (challenge.attempts >= MAX_ATTEMPTS) {
+        return {
+            success: false,
+            reason: "TOO_MANY_ATTEMPTS",
+        } as const;
+    }
+
+    const submittedHash = hashCode(params.code.trim());
+
+    const matches = crypto.timingSafeEqual(
+        Buffer.from(submittedHash, "hex"),
+        Buffer.from(challenge.codeHash, "hex")
+    );
+
+    if (!matches) {
+        const updated = await db.verificationChallenge.update({
+            where: {
+                id: challenge.id,
+            },
+            data: {
+                attempts: {
+                    increment: 1,
+                },
+            },
+            select: {
+                attempts: true,
+            },
+        });
+
+        return {
+            success: false,
+            reason:
+                updated.attempts >= MAX_ATTEMPTS
+                    ? "TOO_MANY_ATTEMPTS"
+                    : "INVALID",
+        } as const;
+    }
+
+    const newEmail = challenge.target.trim().toLowerCase();
+
+    const existing = await db.user.findFirst({
+        where: {
+            email: newEmail,
+            id: {
+                not: params.userId,
+            },
+        },
+        select: {
+            id: true,
+        },
+    });
+
+    if (existing) {
+        return {
+            success: false,
+            reason: "EMAIL_UNAVAILABLE",
+        } as const;
+    }
+
+    await db.$transaction([
+        db.user.update({
+            where: {
+                id: params.userId,
+            },
+            data: {
+                email: newEmail,
+                emailVerifiedAt: new Date(),
+                sessionVersion: {
+                    increment: 1,
+                },
+            },
+        }),
+
+        db.verificationChallenge.update({
+            where: {
+                id: challenge.id,
+            },
+            data: {
+                usedAt: new Date(),
+            },
+        }),
+    ]);
+
+    return {
+        success: true,
+        email: newEmail,
+    } as const;
+}
