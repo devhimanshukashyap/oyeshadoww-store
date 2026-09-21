@@ -150,8 +150,7 @@ it first. The second most important is `src/server/services/order.service.ts` (p
    ```bash
    npm run seed
    ```
-   This creates an admin user from `SEED_ADMIN_EMAIL` / `SEED_ADMIN_PASSWORD` in your `.env` (defaults:
-   `admin@oyeshadoww.com` / `ChangeMe123!`), three starter categories, and one **draft** sample bundle.
+   This creates an admin user from `SEED_ADMIN_EMAIL` / `SEED_ADMIN_PASSWORD` in your `.env`, three starter categories, and one **draft** sample bundle.
 
 6. **Start the dev server**
    ```bash
@@ -279,8 +278,7 @@ Full details: [`docs/DEPLOYMENT.md`](docs/DEPLOYMENT.md).
 ## Admin login
 
 Go to `/admin/login`. Use the email/password from `SEED_ADMIN_EMAIL` / `SEED_ADMIN_PASSWORD` — these are
-defined in your local `.env` file (copied from `.env.example`, defaults are documented there:
-`admin@oyeshadoww.com` / `ChangeMe123!`) and only take effect when you run `npm run seed` against a fresh
+defined in your local `.env` file (copied from `.env.example`, defaults are documented and only take effect when you run `npm run seed` against a fresh
 database. They are never committed to the repository and are not the credentials for any real/production
 account — set your own values in `.env` before seeding.
 
@@ -296,7 +294,7 @@ then update that admin user's `passwordHash` column in the database (via `npx pr
 database provider's SQL console):
 
 ```sql
-UPDATE "User" SET "passwordHash" = '<paste the hash>' WHERE email = 'admin@oyeshadoww.com';
+UPDATE "User" SET "passwordHash" = '<paste the hash>' WHERE email = '';
 ```
 
 To add a **second** admin, use the same approach: hash a password with the snippet above, then insert a row
