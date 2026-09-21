@@ -210,6 +210,115 @@ export async function createPendingOrder(params: {
  * The webhook also calls fulfillOrder(), so either path can safely
  * complete the purchase. fulfillOrder() is idempotent.
  */
+
+export async function getPaymentStatus(params: {
+  userId: string;
+  orderId: string;
+}) {
+  const order = await db.order.findUnique({
+    where: {
+      id: params.orderId,
+    },
+  });
+
+  if (!order) {
+    throw new OrderError("Order not found", 404);
+  }
+
+  if (order.userId !== params.userId) {
+    throw new OrderError("Not your order", 403);
+  }
+
+  if (!order.cashfreeOrderId) {
+    throw new OrderError("Payment order not found", 400);
+  }
+
+  const cashfreeOrder = await fetchCashfreeOrder(
+    order.cashfreeOrderId,
+  );
+
+  const orderMatches =
+    cashfreeOrder.order_id === order.cashfreeOrderId &&
+    Number(cashfreeOrder.order_amount) ===
+    order.totalAmountPaise / 100 &&
+    cashfreeOrder.order_currency === order.currency;
+
+  if (!orderMatches) {
+    logger.warn("order.payment_status_mismatch", {
+      orderId: order.id,
+      cashfreeOrderId: order.cashfreeOrderId,
+      cashfreeStatus: cashfreeOrder.order_status,
+    });
+
+    return {
+      orderId: order.id,
+      status: "FAILED" as const,
+      reason: "Payment verification failed",
+    };
+  }
+
+  const cashfreeStatus = cashfreeOrder.order_status;
+
+  if (cashfreeStatus === "PAID") {
+    try {
+      await verifyAndFulfillOrder({
+        userId: params.userId,
+        orderId: params.orderId,
+      });
+
+      return {
+        orderId: order.id,
+        status: "PAID" as const,
+      };
+    } catch (err) {
+      logger.info("order.payment_verification_pending", {
+        orderId: order.id,
+        cashfreeOrderId: order.cashfreeOrderId,
+        cashfreeStatus,
+      });
+
+      return {
+        orderId: order.id,
+        status: "PENDING" as const,
+      };
+    }
+  }
+
+  const payments = await fetchCashfreePayments(
+    order.cashfreeOrderId,
+  );
+
+  const failedPayment = payments.some(
+    (payment) =>
+      payment.order_id === order.cashfreeOrderId &&
+      [
+        "FAILED",
+        "USER_DROPPED",
+        "CANCELLED",
+      ].includes(payment.payment_status),
+  );
+
+  if (
+    cashfreeStatus === "EXPIRED" ||
+    cashfreeStatus === "CANCELLED" ||
+    failedPayment
+  ) {
+    return {
+      orderId: order.id,
+      status: "FAILED" as const,
+      reason: failedPayment
+        ? "cancelled"
+        : cashfreeStatus,
+    };
+  }
+
+  return {
+    orderId: order.id,
+    status: "PENDING" as const,
+    cashfreeStatus,
+  };
+}
+
 export async function verifyAndFulfillOrder(params: {
   userId: string;
   orderId: string;
@@ -233,10 +342,10 @@ export async function verifyAndFulfillOrder(params: {
   }
 
   if (!order.cashfreeOrderId) {
-  throw new OrderError("Payment order not found", 400);
-}
+    throw new OrderError("Payment order not found", 400);
+  }
 
-const cashfreeOrderId = order.cashfreeOrderId;
+  const cashfreeOrderId = order.cashfreeOrderId;
 
   // Get the authoritative order status from Cashfree.
   const cashfreeOrder =
@@ -246,7 +355,7 @@ const cashfreeOrderId = order.cashfreeOrderId;
   const orderMatches =
     cashfreeOrder.order_id === cashfreeOrderId &&
     Number(cashfreeOrder.order_amount) ===
-      order.totalAmountPaise / 100 &&
+    order.totalAmountPaise / 100 &&
     cashfreeOrder.order_currency === order.currency;
 
   if (!orderMatches) {
@@ -290,7 +399,7 @@ const cashfreeOrderId = order.cashfreeOrderId;
       payment.payment_status === "SUCCESS" &&
       payment.order_id === cashfreeOrderId &&
       Number(payment.payment_amount) ===
-        order.totalAmountPaise / 100 &&
+      order.totalAmountPaise / 100 &&
       payment.payment_currency === order.currency,
   );
 
@@ -495,7 +604,7 @@ export async function markOrderFailed(
     await sendEmail({
       to: order.user.email,
       ...email,
-    }).catch(() => {});
+    }).catch(() => { });
 
     void settings;
   }
@@ -608,7 +717,7 @@ export async function refundOrder(
       siteUrl:
         process.env.NEXT_PUBLIC_SITE_URL ?? "",
     }),
-  }).catch(() => {});
+  }).catch(() => { });
 
   return result;
 }
