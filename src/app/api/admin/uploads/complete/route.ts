@@ -162,7 +162,16 @@ export async function POST(req: NextRequest) {
       targetId: reelId,
     });
 
-    return NextResponse.json({ ok: true, reelId });
+    const completedReel = await db.reel.findUnique({
+      where: { id: reelId },
+      select: { thumbnailKey: true },
+    });
+
+    return NextResponse.json({
+      ok: true,
+      reelId,
+      thumbnailKey: completedReel?.thumbnailKey ?? null,
+    });
   } catch (err) {
     return apiError(err);
   }

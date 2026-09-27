@@ -109,12 +109,17 @@ export async function uploadFile(params: {
     const completedReelId =
       completeData.reelId ?? params.reelId;
 
+    const existingThumbnailKey =
+      completeData.thumbnailKey ?? null;
+
     // ------------------------------------------------------------
     // 4. Generate first-frame thumbnail for watermarked reels
     // ------------------------------------------------------------
     if (
-      params.kind === "reel-watermarked" &&
-      completedReelId
+      (params.kind === "reel-watermarked" ||
+        params.kind === "reel-clean") &&
+      completedReelId &&
+      !existingThumbnailKey
     ) {
       try {
         const thumbnail =

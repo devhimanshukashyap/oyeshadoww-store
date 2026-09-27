@@ -37,7 +37,7 @@ export function ProductAssetUpload({
           <div className="aspect-[9/13] w-full max-w-[140px] overflow-hidden rounded-lg bg-surface-raised">
             {thumbnailKey && (
               // eslint-disable-next-line @next/next/no-img-element
-              <img src={`/api/media/thumbnail?key=${encodeURIComponent(thumbnailKey)}`} alt="" className="h-full w-full object-cover" />
+              <img src={`/api/admin/media/thumbnail?key=${encodeURIComponent(thumbnailKey)}`} alt="" className="h-full w-full object-cover" />
             )}
           </div>
           <input
@@ -55,8 +55,31 @@ export function ProductAssetUpload({
 
         <div>
           <p className="label">Preview clip (teaser)</p>
-          <div className="flex aspect-[9/13] w-full max-w-[140px] items-center justify-center rounded-lg bg-surface-raised text-ink-faint">
-            {previewVideoKey ? <Film size={20} /> : <Upload size={20} />}
+          <div className="aspect-[9/13] w-full max-w-[140px] overflow-hidden rounded-lg bg-surface-raised">
+            {previewVideoKey ? (
+              <video
+                className="h-full w-full object-cover"
+                controls
+                preload="none"
+                poster={
+                  thumbnailKey
+                    ? `/api/admin/media/thumbnail?key=${encodeURIComponent(
+                      thumbnailKey
+                    )}`
+                    : undefined
+                }
+              >
+                <source
+                  src={`/api/admin/media/preview?key=${encodeURIComponent(
+                    previewVideoKey
+                  )}`}
+                />
+              </video>
+            ) : (
+              <div className="flex h-full w-full items-center justify-center text-ink-faint">
+                <Upload size={20} />
+              </div>
+            )}
           </div>
           <input
             ref={previewInput}
