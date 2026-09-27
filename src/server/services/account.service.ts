@@ -155,12 +155,34 @@ export async function changePassword(userId: string, currentPassword: string, ne
 }
 
 /** Full order history (every status, not just PAID) — distinct from "My Purchases," which only shows active entitlements. */
-export async function getUserOrderHistory(userId: string) {
-  return db.order.findMany({
-    where: { userId },
-    include: { items: true },
-    orderBy: { createdAt: "desc" },
-  });
+export async function getUserOrderHistory(
+  userId: string,
+  page = 1,
+  pageSize = 10,
+) {
+  const safePage = Math.max(1, page);
+  const safePageSize = Math.min(Math.max(1, pageSize), 50);
+
+  const [orders, total] = await Promise.all([
+    db.order.findMany({
+      where: { userId },
+      include: { items: true },
+      orderBy: { createdAt: "desc" },
+      skip: (safePage - 1) * safePageSize,
+      take: safePageSize,
+    }),
+    db.order.count({
+      where: { userId },
+    }),
+  ]);
+
+  return {
+    orders,
+    total,
+    page: safePage,
+    pageSize: safePageSize,
+    totalPages: Math.ceil(total / safePageSize),
+  };
 }
 
 /** Recent download activity for the account's "history" section — read-only, capped so the query stays cheap. */
