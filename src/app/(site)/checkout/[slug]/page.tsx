@@ -46,11 +46,11 @@ export default async function CheckoutPage({
         ]}
       />
 
-      <h1 className="font-display text-2xl font-semibold text-ink">
+      <h1 className="checkout-content font-display text-2xl font-semibold text-ink">
         Checkout
       </h1>
 
-      <div className="card mt-6 p-5">
+      <div className="checkout-content checkout-delay-1 card mt-6 p-5">
         <div className="flex items-center justify-between">
           <div>
             <p className="font-medium text-ink">{product.name}</p>
@@ -65,14 +65,15 @@ export default async function CheckoutPage({
         </div>
       </div>
 
-      <div className="mt-5 border-t border-border pt-5">
+      <div className="checkout-content checkout-delay-2 mt-5 border-t border-border pt-5">
         <h2 className="font-display text-sm font-semibold text-ink">
           What’s included
         </h2>
 
         <ul className="mt-3 space-y-2 text-sm text-ink-muted">
           <li>
-            • {product.reels.length} {product.reels.length === 1 ? "reel" : "reels"}
+            • {product.reels.length}{" "}
+            {product.reels.length === 1 ? "reel" : "reels"}
           </li>
 
           {variant === "WATERMARKED" ? (
@@ -85,7 +86,9 @@ export default async function CheckoutPage({
               {product._count.bundlePlusExtras > 0 && (
                 <li>
                   • {product._count.bundlePlusExtras} premium{" "}
-                  {product._count.bundlePlusExtras === 1 ? "extra" : "extras"}
+                  {product._count.bundlePlusExtras === 1
+                    ? "extra"
+                    : "extras"}
                 </li>
               )}
             </>
@@ -93,14 +96,16 @@ export default async function CheckoutPage({
         </ul>
       </div>
 
-      <CheckoutPanel
-        productId={product.id}
-        productName={product.name}
-        variant={variant}
-        userEmail={user.email ?? ""}
-      />
+      <div className="checkout-content checkout-delay-3">
+        <CheckoutPanel
+          productId={product.id}
+          productName={product.name}
+          variant={variant}
+          userEmail={user.email ?? ""}
+        />
+      </div>
 
-      <p className="mt-6 text-center text-xs text-ink-faint">
+      <p className="checkout-content checkout-delay-4 mt-6 text-center text-xs text-ink-faint">
         Payments are processed securely by Cashfree. We never see or store
         your card details.
       </p>

@@ -110,14 +110,6 @@
     @apply animate-pulse rounded-md bg-surface-raised;
   }
 
-  /* --------------------------------------------------------------------
-     Fluid type scale — the sizes that should scale smoothly with the
-     viewport instead of jumping at breakpoints (hero + top-level section
-     titles). Using clamp() here means a phone never renders an
-     oversized heading and a large desktop never looks under-scaled,
-     without needing separate sm:/md:/lg: overrides everywhere this is
-     used.
-     -------------------------------------------------------------------- */
   .text-hero {
     @apply font-display font-semibold text-ink;
     font-size: clamp(2rem, 1.5rem + 3vw, 3.5rem);
@@ -257,5 +249,47 @@
   .success-ring,
   .success-sparkle {
     opacity: 0;
+  }
+}
+
+/* --- Checkout entrance animation --- */
+
+@keyframes checkout-content-in {
+  from {
+    opacity: 0;
+    transform: translateY(7px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.checkout-content {
+  animation: checkout-content-in 400ms ease-out both;
+}
+
+.checkout-delay-1 {
+  animation-delay: 80ms;
+}
+
+.checkout-delay-2 {
+  animation-delay: 160ms;
+}
+
+.checkout-delay-3 {
+  animation-delay: 240ms;
+}
+
+.checkout-delay-4 {
+  animation-delay: 320ms;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .checkout-content {
+    animation: none;
+    opacity: 1;
+    transform: none;
   }
 }
