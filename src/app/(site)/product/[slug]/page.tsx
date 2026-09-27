@@ -3,12 +3,13 @@ import type { Metadata } from "next";
 import { Suspense } from "react";
 import Link from "next/link";
 import { Film, Check, ShieldCheck } from "lucide-react";
-import { getPublishedProductBySlug } from "@/server/services/product.service";
+import { getPublishedProductBySlug, getUserOwnedVariants } from "@/server/services/product.service";
 import { getSettings } from "@/lib/settings";
 import { formatPaise } from "@/lib/utils";
 import { ProductDetailSkeleton } from "@/components/skeletons";
 import { BuyButton } from "@/components/buy-button";
 import { Breadcrumbs } from "@/components/breadcrumbs";
+import { getCurrentUser } from "@/lib/session";
 
 export async function generateMetadata({
   params,
@@ -44,10 +45,20 @@ export default function ProductPage({
 }
 
 async function ProductDetail({ slug }: { slug: string }) {
+  const user = await getCurrentUser();
+
   const [product, settings] = await Promise.all([
     getPublishedProductBySlug(slug),
     getSettings(),
   ]);
+
+  if (!product) {
+    notFound();
+  }
+
+  const ownedVariants = user
+    ? await getUserOwnedVariants(user.id, product.id)
+    : [];
 
   if (!product) notFound();
 
@@ -158,6 +169,8 @@ async function ProductDetail({ slug }: { slug: string }) {
                 slug={product.slug}
                 variant="WATERMARKED"
                 label="Bundle"
+                productId={product.id}
+                owned={ownedVariants.includes("WATERMARKED")}
                 note="Watermarked reels"
                 price={formatPaise(
                   product.watermarkedPriceInPaise,
@@ -171,6 +184,8 @@ async function ProductDetail({ slug }: { slug: string }) {
                 slug={product.slug}
                 variant="CLEAN"
                 label="Bundle+"
+                productId={product.id}
+                owned={ownedVariants.includes("CLEAN")}
                 note="Non-watermarked reels + premium extras"
                 price={formatPaise(
                   product.cleanPriceInPaise,
@@ -282,6 +297,8 @@ function PricingRow({
   note,
   price,
   highlight,
+  productId,
+  owned,
 }: {
   slug: string;
   variant: "WATERMARKED" | "CLEAN";
@@ -289,12 +306,14 @@ function PricingRow({
   note: string;
   price: string;
   highlight?: boolean;
+  productId: string;
+  owned: boolean;
 }) {
   return (
     <div
       className={`flex items-center justify-between rounded-card border p-4 ${highlight
-          ? "border-accent bg-accent/10"
-          : "border-border bg-surface"
+        ? "border-accent bg-accent/10"
+        : "border-border bg-surface"
         }`}
     >
       <div>
@@ -309,7 +328,9 @@ function PricingRow({
 
         <BuyButton
           slug={slug}
+          productId={productId}
           variant={variant}
+          owned={owned}
           highlight={highlight}
         />
       </div>

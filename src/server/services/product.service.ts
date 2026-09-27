@@ -58,6 +58,27 @@ export async function getUserPurchases(userId: string) {
   });
 }
 
+export async function getUserOwnedVariants(
+  userId: string,
+  productId: string,
+) {
+  const purchases = await db.purchase.findMany({
+    where: {
+      userId,
+      productId,
+      status: "ACTIVE",
+      order: {
+        status: "PAID",
+      },
+    },
+    select: {
+      variant: true,
+    },
+  });
+
+  return purchases.map((purchase) => purchase.variant);
+}
+
 export async function getPurchasedProductDetail(userId: string, productId: string) {
   const purchases = await db.purchase.findMany({
     where: { userId, productId, status: "ACTIVE" },
