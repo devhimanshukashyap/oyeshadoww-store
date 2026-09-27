@@ -186,13 +186,34 @@ export async function getUserOrderHistory(
 }
 
 /** Recent download activity for the account's "history" section — read-only, capped so the query stays cheap. */
-export async function getUserDownloadHistory(userId: string, limit = 15) {
-  return db.downloadLog.findMany({
-    where: { userId },
-    include: { reel: true },
-    orderBy: { createdAt: "desc" },
-    take: limit,
-  });
+export async function getUserDownloadHistory(
+  userId: string,
+  page = 1,
+  pageSize = 10,
+) {
+  const safePage = Math.max(1, page);
+  const safePageSize = Math.min(Math.max(1, pageSize), 50);
+
+  const [downloads, total] = await Promise.all([
+    db.downloadLog.findMany({
+      where: { userId },
+      include: { reel: true },
+      orderBy: { createdAt: "desc" },
+      skip: (safePage - 1) * safePageSize,
+      take: safePageSize,
+    }),
+    db.downloadLog.count({
+      where: { userId },
+    }),
+  ]);
+
+  return {
+    downloads,
+    total,
+    page: safePage,
+    pageSize: safePageSize,
+    totalPages: Math.ceil(total / safePageSize),
+  };
 }
 
 const PASSWORD_RESET_EXPIRY_MINUTES = 30;

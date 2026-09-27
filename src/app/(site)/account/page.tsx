@@ -19,7 +19,7 @@ export const dynamic = "force-dynamic";
 export default async function AccountPage({
   searchParams,
 }: {
-  searchParams: Promise<{ ordersPage?: string }>;
+  searchParams: Promise<{ ordersPage?: string; downloadsPage?: string; }>;
 }) {
   const sessionUser = await getCurrentUser();
   if (!sessionUser) redirect("/login?callbackUrl=/account");
@@ -28,17 +28,27 @@ export default async function AccountPage({
   if (!user) redirect("/login");
 
   const params = await searchParams;
+
   const requestedOrdersPage = Number.parseInt(params.ordersPage ?? "1", 10);
   const ordersPage = Number.isFinite(requestedOrdersPage)
     ? Math.max(1, requestedOrdersPage)
     : 1;
 
-  const [orderHistory, downloads] = await Promise.all([
+  const requestedDownloadsPage = Number.parseInt(
+    params.downloadsPage ?? "1",
+    10,
+  );
+  const downloadsPage = Number.isFinite(requestedDownloadsPage)
+    ? Math.max(1, requestedDownloadsPage)
+    : 1;
+
+  const [orderHistory, downloadHistory] = await Promise.all([
     getUserOrderHistory(user.id, ordersPage, 10),
-    getUserDownloadHistory(user.id),
+    getUserDownloadHistory(user.id, downloadsPage, 10),
   ]);
 
-  const { orders, totalPages } = orderHistory;
+  const { orders, totalPages: orderTotalPages } = orderHistory;
+  const { downloads, totalPages: downloadTotalPages } = downloadHistory;
 
   return (
     <div className="container-page max-w-2xl py-14">
@@ -135,7 +145,7 @@ export default async function AccountPage({
                 ))}
               </div>
 
-              {totalPages > 1 && (
+              {orderTotalPages > 1 && (
                 <div className="mt-4 flex items-center justify-between">
                   {ordersPage > 1 ? (
                     <Link
@@ -149,10 +159,10 @@ export default async function AccountPage({
                   )}
 
                   <span className="text-xs text-ink-faint">
-                    Page {ordersPage} of {totalPages}
+                    Page {ordersPage} of {orderTotalPages}
                   </span>
 
-                  {ordersPage < totalPages ? (
+                  {ordersPage < orderTotalPages ? (
                     <Link
                       href={`/account?ordersPage=${ordersPage + 1}`}
                       className="btn-secondary px-4 py-2 text-sm"
@@ -169,6 +179,7 @@ export default async function AccountPage({
         </section>
 
         {/* --- Recent download activity --- */}
+        {/* --- Recent download activity --- */}
         <section>
           <h2 className="mb-3 font-display text-base font-semibold text-ink">
             Recent downloads
@@ -177,35 +188,67 @@ export default async function AccountPage({
           {downloads.length === 0 ? (
             <EmptyState icon={Download} title="No downloads yet" />
           ) : (
-            <div className="card divide-y divide-border">
-              {downloads.map((log) => (
-                <div
-                  key={log.id}
-                  className="flex items-center justify-between gap-3 p-4"
-                >
-                  <div className="min-w-0">
-                    <p className="truncate text-sm text-ink">
-                      {log.reel?.title ?? "Batch download"}
-                    </p>
-
-                    <p className="text-xs text-ink-faint">
-                      {formatDateTime(log.createdAt)}
-                    </p>
-                  </div>
-
-                  <span
-                    className={cn(
-                      "shrink-0 rounded-pill px-2 py-0.5 text-[10px] font-medium",
-                      log.success
-                        ? "bg-success/15 text-success"
-                        : "bg-danger/15 text-danger"
-                    )}
+            <>
+              <div className="card divide-y divide-border">
+                {downloads.map((log) => (
+                  <div
+                    key={log.id}
+                    className="flex items-center justify-between gap-3 p-4"
                   >
-                    {log.success ? "Success" : "Failed"}
+                    <div className="min-w-0">
+                      <p className="truncate text-sm text-ink">
+                        {log.reel?.title ?? "Batch download"}
+                      </p>
+
+                      <p className="text-xs text-ink-faint">
+                        {formatDateTime(log.createdAt)}
+                      </p>
+                    </div>
+
+                    <span
+                      className={cn(
+                        "shrink-0 rounded-pill px-2 py-0.5 text-[10px] font-medium",
+                        log.success
+                          ? "bg-success/15 text-success"
+                          : "bg-danger/15 text-danger",
+                      )}
+                    >
+                      {log.success ? "Success" : "Failed"}
+                    </span>
+                  </div>
+                ))}
+              </div>
+
+              {downloadTotalPages > 1 && (
+                <div className="mt-4 flex items-center justify-between">
+                  {downloadsPage > 1 ? (
+                    <Link
+                      href={`/account?ordersPage=${ordersPage}&downloadsPage=${downloadsPage - 1}`}
+                      className="btn-secondary px-4 py-2 text-sm"
+                    >
+                      ← Previous
+                    </Link>
+                  ) : (
+                    <span />
+                  )}
+
+                  <span className="text-xs text-ink-faint">
+                    Page {downloadsPage} of {downloadTotalPages}
                   </span>
+
+                  {downloadsPage < downloadTotalPages ? (
+                    <Link
+                      href={`/account?ordersPage=${ordersPage}&downloadsPage=${downloadsPage + 1}`}
+                      className="btn-secondary px-4 py-2 text-sm"
+                    >
+                      Next →
+                    </Link>
+                  ) : (
+                    <span />
+                  )}
                 </div>
-              ))}
-            </div>
+              )}
+            </>
           )}
         </section>
 
