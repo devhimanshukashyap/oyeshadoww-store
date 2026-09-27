@@ -59,6 +59,7 @@
   }
 
   @media (prefers-reduced-motion: reduce) {
+
     *,
     *::before,
     *::after {
@@ -137,5 +138,124 @@
   .text-eyebrow {
     @apply font-sans text-xs font-medium uppercase text-accent;
     letter-spacing: 0.08em;
+  }
+}
+
+/* --- Payment success animation --- */
+@keyframes success-icon-pop {
+  0% {
+    opacity: 0;
+    transform: scale(0.65);
+  }
+
+  70% {
+    transform: scale(1.08);
+  }
+
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes success-ring-expand {
+  0% {
+    opacity: 0;
+    transform: scale(0.7);
+  }
+
+  30% {
+    opacity: 0.7;
+  }
+
+  100% {
+    opacity: 0;
+    transform: scale(1.45);
+  }
+}
+
+@keyframes success-content-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes success-sparkle-pop {
+  0% {
+    opacity: 0;
+    transform: scale(0.3) rotate(-20deg);
+  }
+
+  40% {
+    opacity: 1;
+    transform: scale(1) rotate(0deg);
+  }
+
+  100% {
+    opacity: 0;
+    transform: scale(0.7) rotate(15deg);
+  }
+}
+
+.success-icon {
+  animation: success-icon-pop 500ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.success-ring {
+  animation: success-ring-expand 700ms ease-out 100ms both;
+}
+
+.success-content {
+  animation: success-content-in 450ms ease-out 180ms both;
+}
+
+.success-delay-1 {
+  animation-delay: 260ms;
+}
+
+.success-delay-2 {
+  animation-delay: 360ms;
+}
+
+.success-sparkle {
+  animation: success-sparkle-pop 650ms ease-out 180ms both;
+}
+
+.success-sparkle-two {
+  animation-delay: 260ms;
+}
+
+.success-sparkle-three {
+  animation-delay: 320ms;
+}
+
+@media (prefers-reduced-motion: reduce) {
+
+  .success-icon,
+  .success-ring,
+  .success-content,
+  .success-sparkle {
+    animation: none;
+  }
+
+  .success-icon {
+    opacity: 1;
+    transform: none;
+  }
+
+  .success-content {
+    opacity: 1;
+    transform: none;
+  }
+
+  .success-ring,
+  .success-sparkle {
+    opacity: 0;
   }
 }
