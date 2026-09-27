@@ -9,6 +9,7 @@ export async function Navbar() {
   const [settings, user] = await Promise.all([getSettings(), getCurrentUser()]);
 
   const links = [
+    { href: "/", label: "Home" },
     { href: "/shop", label: "Shop" },
     { href: "/about", label: "About" },
     { href: "/faq", label: "FAQ" },
