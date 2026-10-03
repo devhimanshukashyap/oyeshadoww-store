@@ -3,7 +3,9 @@ import {
   PutObjectCommand,
   GetObjectCommand,
   DeleteObjectCommand,
+  DeleteObjectsCommand,
   HeadObjectCommand,
+  ListObjectsV2Command,
 } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import { nanoid } from "nanoid";
@@ -160,6 +162,45 @@ export async function objectExists(key: string): Promise<boolean> {
 
 export async function deleteObject(key: string): Promise<void> {
   await getR2Client().send(new DeleteObjectCommand({ Bucket: getBucketName(), Key: key }));
+}
+
+export async function deleteObjectsByPrefix(prefix: string): Promise<number> {
+  let continuationToken: string | undefined;
+  let deletedCount = 0;
+
+  do {
+    const list = await getR2Client().send(
+      new ListObjectsV2Command({
+        Bucket: getBucketName(),
+        Prefix: prefix,
+        ContinuationToken: continuationToken,
+        MaxKeys: 1000,
+      })
+    );
+
+    const keys = (list.Contents ?? [])
+      .map((object) => object.Key)
+      .filter((key): key is string => Boolean(key));
+
+    if (keys.length > 0) {
+      await getR2Client().send(
+        new DeleteObjectsCommand({
+          Bucket: getBucketName(),
+          Delete: {
+            Objects: keys.map((Key) => ({ Key })),
+          },
+        })
+      );
+
+      deletedCount += keys.length;
+    }
+
+    continuationToken = list.IsTruncated
+      ? list.NextContinuationToken
+      : undefined;
+  } while (continuationToken);
+
+  return deletedCount;
 }
 
 export async function getObjectBuffer(key: string): Promise<{ body: Uint8Array; contentType?: string }> {

@@ -4,6 +4,7 @@ import { apiError } from "@/lib/api-error";
 import { db } from "@/lib/db";
 import { productUpsertSchema } from "@/lib/validation";
 import { logAdminAction } from "@/server/services/audit.service";
+import { deleteObjectsByPrefix } from "@/lib/r2";
 
 export async function GET(_req: NextRequest, { params }: { params: { id: string } }) {
   try {
@@ -48,16 +49,63 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
   }
 }
 
-/** Soft delete only — historical Orders/Purchases must keep referencing this product row. */
+/** Soft delete the product while cleaning its R2 assets when no active customer entitlement exists. */
 export async function DELETE(_req: NextRequest, { params }: { params: { id: string } }) {
   try {
     const admin = await requireAdmin();
-    const product = await db.product.update({
+
+    const product = await db.product.findUnique({
       where: { id: params.id },
-      data: { deletedAt: new Date(), status: "ARCHIVED", purchasable: false },
+      select: {
+        id: true,
+        deletedAt: true,
+      },
     });
-    await logAdminAction({ adminId: admin.id, action: "product.soft_delete", targetType: "Product", targetId: product.id });
-    return NextResponse.json({ ok: true });
+
+    if (!product) {
+      return NextResponse.json({ error: "Not found" }, { status: 404 });
+    }
+
+    const activePurchases = await db.purchase.count({
+      where: {
+        productId: product.id,
+        status: "ACTIVE",
+      },
+    });
+
+    const assetsCanBeDeleted = activePurchases === 0;
+
+    let deletedAssetCount = 0;
+
+    if (assetsCanBeDeleted) {
+      deletedAssetCount = await deleteObjectsByPrefix(
+        `products/${product.id}/`,
+      );
+    }
+
+    await db.product.update({
+      where: { id: product.id },
+      data: {
+        deletedAt: product.deletedAt ?? new Date(),
+        status: "ARCHIVED",
+        purchasable: false,
+      },
+    });
+
+    await logAdminAction({
+      adminId: admin.id,
+      action: assetsCanBeDeleted
+        ? "product.soft_delete"
+        : "product.soft_delete_preserve_assets",
+      targetType: "Product",
+      targetId: product.id,
+    });
+
+    return NextResponse.json({
+      ok: true,
+      assetsDeleted: assetsCanBeDeleted,
+      deletedAssetCount,
+    });
   } catch (err) {
     return apiError(err);
   }
