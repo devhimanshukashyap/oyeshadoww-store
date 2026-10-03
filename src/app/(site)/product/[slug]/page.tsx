@@ -118,7 +118,10 @@ async function ProductDetail({ slug }: { slug: string }) {
                   <video
                     className="h-full w-full object-cover"
                     controls
+                    controlsList="nodownload noplaybackrate"
+                    disablePictureInPicture
                     preload="none"
+                    onContextMenu={(event) => event.preventDefault()}
                     poster={
                       product.thumbnailKey
                         ? `/api/media/thumbnail?key=${encodeURIComponent(
@@ -334,21 +337,40 @@ function PricingRow({
 }) {
   return (
     <div
-      className={`flex items-center justify-between rounded-card border p-4 ${highlight
-        ? "border-accent bg-accent/10"
-        : "border-border bg-surface"
+      className={`rounded-card border p-4 ${highlight
+          ? "border-accent bg-accent/10"
+          : "border-border bg-surface"
         }`}
     >
-      <div>
-        <p className="font-medium text-ink">{label}</p>
-        <p className="text-xs text-ink-muted">{note}</p>
-      </div>
+      <div className="flex items-start justify-between gap-4">
+        <div className="min-w-0">
+          <div className="flex items-center gap-2">
+            <p className="font-medium text-ink">{label}</p>
 
-      <div className="flex items-center gap-3">
-        <span className="font-display text-lg font-semibold text-ink">
+            {highlight && (
+              <span className="rounded-full bg-accent px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-white">
+                Best value
+              </span>
+            )}
+
+            {owned && (
+              <span className="rounded-full border border-success/20 bg-success/10 px-2 py-0.5 text-[10px] font-medium text-success">
+                Owned
+              </span>
+            )}
+          </div>
+
+          <p className="mt-1 text-xs leading-relaxed text-ink-muted">
+            {note}
+          </p>
+        </div>
+
+        <span className="shrink-0 font-display text-lg font-semibold text-ink">
           {price}
         </span>
+      </div>
 
+      <div className="mt-3">
         <BuyButton
           slug={slug}
           productId={productId}
