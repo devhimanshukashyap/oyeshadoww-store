@@ -58,6 +58,7 @@ export async function DELETE(_req: NextRequest, { params }: { params: { id: stri
       where: { id: params.id },
       select: {
         id: true,
+        slug: true,
         deletedAt: true,
       },
     });
@@ -86,6 +87,7 @@ export async function DELETE(_req: NextRequest, { params }: { params: { id: stri
     await db.product.update({
       where: { id: product.id },
       data: {
+        slug: `${product.slug}--deleted-${product.id}`,
         deletedAt: product.deletedAt ?? new Date(),
         status: "ARCHIVED",
         purchasable: false,
