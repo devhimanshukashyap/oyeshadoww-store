@@ -31,15 +31,44 @@ const faqs = [
 
 export default function FaqPage() {
   return (
-    <div className="container-page max-w-prose py-14">
-      <h1 className="font-display text-3xl font-semibold text-ink">Frequently asked questions</h1>
-      <div className="mt-8 divide-y divide-border">
-        {faqs.map((item) => (
-          <details key={item.q} className="group py-4">
-            <summary className="cursor-pointer list-none text-base font-medium text-ink marker:content-none">
-              {item.q}
+    <div className="container-page max-w-3xl py-14">
+      <div>
+        <p className="text-xs font-semibold uppercase tracking-[0.18em] text-accent">
+          Help center
+        </p>
+
+        <h1 className="mt-2 font-display text-3xl font-semibold tracking-tight text-ink sm:text-4xl">
+          Frequently asked questions
+        </h1>
+
+        <p className="mt-3 max-w-2xl text-sm leading-relaxed text-ink-muted sm:text-base">
+          Everything you need to know about bundles, payments, downloads, and
+          using your purchased reels.
+        </p>
+      </div>
+
+      <div className="mt-10 overflow-hidden rounded-card border border-border bg-surface shadow-sm">
+        {faqs.map((item, index) => (
+          <details
+            key={item.q}
+            className="group border-b border-border last:border-b-0"
+          >
+            <summary className="flex cursor-pointer list-none items-center justify-between gap-4 px-5 py-5 text-sm font-semibold text-ink transition-colors hover:bg-surface-raised sm:px-6">
+              <span>{item.q}</span>
+
+              <span
+                aria-hidden="true"
+                className="shrink-0 text-lg font-normal text-ink-faint transition-transform duration-300 group-open:rotate-45 group-open:text-accent"
+              >
+                +
+              </span>
             </summary>
-            <p className="mt-2 text-sm leading-relaxed text-ink-muted">{item.a}</p>
+
+            <div className="px-5 pb-5 sm:px-6">
+              <p className="max-w-2xl text-sm leading-relaxed text-ink-muted">
+                {item.a}
+              </p>
+            </div>
           </details>
         ))}
       </div>
