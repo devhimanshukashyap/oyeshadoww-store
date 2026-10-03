@@ -92,11 +92,11 @@ export async function POST(req: NextRequest) {
         const optimizedThumbnail = await sharp(source.body)
           .rotate()
           .resize({
-            width: 640,
+            width: 800,
             withoutEnlargement: true,
           })
           .webp({
-            quality: 82,
+            quality: 90,
             effort: 4,
           })
           .toBuffer();
