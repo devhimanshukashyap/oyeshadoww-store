@@ -52,15 +52,24 @@ export default async function AccountPage({
 
   return (
     <div className="container-page max-w-2xl py-14">
-      <h1 className="font-display text-2xl font-semibold text-ink">My Account</h1>
-      <p className="mt-1 text-sm text-ink-muted">
-        Manage your profile, security, and order history.
-      </p>
+      <div>
+        <p className="text-xs font-semibold uppercase tracking-[0.18em] text-accent">
+          Account
+        </p>
+
+        <h1 className="mt-2 font-display text-3xl font-semibold tracking-tight text-ink sm:text-4xl">
+          My Account
+        </h1>
+
+        <p className="mt-2 max-w-xl text-sm leading-relaxed text-ink-muted sm:text-base">
+          Manage your profile, security, purchases, and account activity.
+        </p>
+      </div>
 
       <div className="mt-8 space-y-8">
         {/* --- Profile --- */}
         <section>
-          <h2 className="mb-3 font-display text-base font-semibold text-ink">Profile</h2>
+          <h2 className="mb-3 font-display text-lg font-semibold tracking-tight text-ink">Profile</h2>
           <div className="card space-y-4 p-5">
             <AccountProfileForm initialName={user.name ?? ""} />
             <div className="border-t border-border pt-4 text-sm text-ink-muted">
@@ -71,8 +80,7 @@ export default async function AccountPage({
 
         {/* --- Security --- */}
         <section>
-          <h2 className="mb-3 font-display text-base font-semibold text-ink">Security</h2>
-
+          <h2 className="mb-3 font-display text-lg font-semibold tracking-tight text-ink">Security</h2>
           <div className="card space-y-5 p-5">
             <AccountEmailVerification
               email={user.email}
@@ -91,22 +99,40 @@ export default async function AccountPage({
 
         {/* --- Purchases shortcut --- */}
         <section>
-          <h2 className="mb-3 font-display text-base font-semibold text-ink">Purchases</h2>
+          <h2 className="mb-3 font-display text-lg font-semibold tracking -tight text-ink">Purchases</h2>
           <Link
             href="/purchases"
-            className="card flex items-center justify-between p-5 hover:border-accent/50"
+            className="group block rounded-card border border-border bg-surface p-5 shadow-sm transition duration-300 hover:-translate-y-0.5 hover:border-accent/40 hover:shadow-panel focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/50"
           >
-            <span className="flex items-center gap-3">
-              <ShoppingBag size={18} className="text-accent" />
-              <span className="text-sm font-medium text-ink">My Purchases</span>
-            </span>
-            <span className="text-sm text-ink-faint">View & download →</span>
+            <div className="flex items-center justify-between gap-4">
+              <div className="flex min-w-0 items-center gap-3">
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-accent/10 text-accent">
+                  <ShoppingBag size={18} />
+                </div>
+
+                <div className="min-w-0">
+                  <p className="text-sm font-semibold text-ink">
+                    My Purchases
+                  </p>
+                  <p className="mt-0.5 text-xs text-ink-muted">
+                    Access your purchased bundles and downloads.
+                  </p>
+                </div>
+              </div>
+
+              <span
+                aria-hidden="true"
+                className="shrink-0 text-lg text-ink-muted transition-transform duration-300 group-hover:translate-x-1 group-hover:text-accent"
+              >
+                →
+              </span>
+            </div>
           </Link>
         </section>
 
         {/* --- Order history --- */}
         <section>
-          <h2 className="mb-3 font-display text-base font-semibold text-ink">
+          <h2 className="mb-3 font-display text-lg font-semibold tracking-tight text-ink">
             Order history
           </h2>
 
@@ -122,10 +148,10 @@ export default async function AccountPage({
                 {orders.map((order) => (
                   <div
                     key={order.id}
-                    className="flex items-center justify-between gap-3 p-4"
+                    className="flex items-center justify-between gap-4 p-4 transition-colors hover:bg-surface-raised/50"
                   >
                     <div className="min-w-0">
-                      <p className="truncate text-sm font-medium text-ink">
+                      <p className="truncate text-sm font-semibold text-ink">
                         {order.items.map((i) => i.productNameSnapshot).join(", ") || "—"}
                       </p>
 
@@ -193,7 +219,7 @@ export default async function AccountPage({
                 {downloads.map((log) => (
                   <div
                     key={log.id}
-                    className="flex items-center justify-between gap-3 p-4"
+                    className="flex items-center justify-between gap-4 p-4 transition-colors hover:bg-surface-raised/50"
                   >
                     <div className="min-w-0">
                       <p className="truncate text-sm text-ink">
