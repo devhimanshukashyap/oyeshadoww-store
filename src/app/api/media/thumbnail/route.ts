@@ -27,5 +27,11 @@ export async function GET(req: NextRequest) {
   if (!product) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
   const url = await createDownloadUrl({ key, expiresInSeconds: 3600 });
-  return NextResponse.redirect(url, { status: 302 });
+  return new NextResponse(null, {
+    status: 302,
+    headers: {
+      Location: url,
+      "Cache-Control": "public, max-age=300, s-maxage=300",
+    },
+  });
 }
