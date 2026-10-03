@@ -141,66 +141,149 @@ function Hero({
   } | null;
 }) {
   return (
-    <section className="container-page grid items-center gap-10 py-12 md:grid-cols-2 md:py-20">
-      <div>
-        <p className="text-sm font-medium text-accent">{brandHandle}</p>
-        <h1 className="mt-3 text-hero">
-          AI-made reels, <br className="hidden sm:block" />ready to post.
-        </h1>
-        <p className="mt-4 max-w-md text-base text-ink-muted">{tagline} Grab a bundle, get instant access, and start posting today.</p>
-        <div className="mt-8 flex flex-wrap gap-3">
-          <Link href="/shop" className="btn-primary px-6 py-3.5 text-base">
-            Browse bundles
-          </Link>
-          <Link href="/about" className="btn-secondary px-6 py-3.5 text-base">
-            How it works
-          </Link>
-        </div>
-        <div className="mt-8 flex items-center gap-6 text-xs text-ink-faint">
-          <span className="inline-flex items-center gap-1.5"><ShieldCheck size={14} /> Secure checkout</span>
-          <span className="inline-flex items-center gap-1.5"><Zap size={14} /> Instant access</span>
-        </div>
+    <section className="relative overflow-hidden">
+      <div className="pointer-events-none absolute inset-0 -z-10">
+        <div className="absolute left-[8%] top-10 h-56 w-56 rounded-full bg-accent/10 blur-3xl" />
+        <div className="absolute right-[12%] top-24 h-72 w-72 rounded-full bg-accent/5 blur-3xl" />
       </div>
-          {heroPreviewUrl && (
-            <div className="relative mx-auto hidden w-full max-w-[280px] md:block">
-              <Link
-                href={
-                  heroPreviewProduct
-                    ? `/product/${heroPreviewProduct.slug}`
-                    : "/shop"
-                }
-                className="group block"
-              >
-                <div className="aspect-[9/16] w-full overflow-hidden rounded-[2rem] border border-border bg-surface shadow-panel transition group-hover:shadow-lg">
-                  <video
-                    src={heroPreviewUrl}
-                    autoPlay
-                    muted
-                    loop
-                    playsInline
-                    preload="metadata"
-                    className="h-full w-full object-cover transition group-hover:scale-[1.01]"
-                  />
-                </div>
 
-                {heroPreviewProduct && (
-                  <div className="absolute bottom-4 left-4 right-4 rounded-2xl border border-white/20 bg-black/60 px-4 py-3 text-white backdrop-blur-md">
-                    <p className="text-xs text-white/70">
+      <div className="container-page grid items-center gap-12 py-14 md:grid-cols-[1.05fr_0.95fr] md:py-24 lg:gap-20">
+        <div className="max-w-2xl">
+          <div className="inline-flex items-center gap-2 rounded-pill border border-border bg-surface/80 px-3 py-1.5 text-xs font-medium text-ink-muted shadow-sm backdrop-blur">
+            <span className="h-1.5 w-1.5 rounded-full bg-accent" />
+            {brandHandle}
+            <span className="text-ink-faint">·</span>
+            Ready to post
+          </div>
+
+          <h1 className="mt-6 text-hero tracking-tight">
+            AI-made reels.
+            <br />
+            <span className="text-accent">Ready to post.</span>
+          </h1>
+
+          <p className="mt-6 max-w-xl text-base leading-7 text-ink-muted sm:text-lg">
+            {tagline} Grab a bundle, get instant access, and start posting
+            today.
+          </p>
+
+          <div className="mt-8 flex flex-wrap gap-3">
+            <Link
+              href="/shop"
+              className="btn-primary px-6 py-3.5 text-base shadow-sm transition-transform hover:-translate-y-0.5"
+            >
+              Browse bundles
+              <span aria-hidden="true"> →</span>
+            </Link>
+
+            <Link
+              href="/about"
+              className="btn-secondary px-6 py-3.5 text-base transition-transform hover:-translate-y-0.5"
+            >
+              How it works
+            </Link>
+          </div>
+
+          <div className="mt-8 flex flex-wrap items-center gap-x-6 gap-y-3 text-xs text-ink-faint">
+            <span className="inline-flex items-center gap-1.5">
+              <ShieldCheck size={14} />
+              Secure checkout
+            </span>
+
+            <span className="inline-flex items-center gap-1.5">
+              <Zap size={14} />
+              Instant access
+            </span>
+
+            <span className="inline-flex items-center gap-1.5">
+              <Download size={14} />
+              Download anytime
+            </span>
+          </div>
+        </div>
+
+        {heroPreviewUrl && (
+          <div className="relative mx-auto w-full max-w-[310px] md:max-w-[340px]">
+            <div className="absolute -inset-6 rounded-[3rem] bg-accent/10 blur-3xl" />
+
+            <Link
+              href={
+                heroPreviewProduct
+                  ? `/product/${heroPreviewProduct.slug}`
+                  : "/shop"
+              }
+              className="group relative block"
+            >
+              <div className="absolute -right-3 top-6 z-10 hidden rounded-2xl border border-border bg-surface/95 px-3 py-2 shadow-panel backdrop-blur sm:block">
+                <p className="text-[10px] font-medium uppercase tracking-[0.16em] text-ink-faint">
+                  Preview
+                </p>
+                <p className="mt-0.5 text-xs font-medium text-ink">
+                  Watch before you buy
+                </p>
+              </div>
+
+              <div className="relative overflow-hidden rounded-[2rem] border border-border bg-surface shadow-panel transition duration-500 group-hover:-translate-y-1 group-hover:shadow-lg">
+                <div className="absolute inset-x-0 top-0 z-10 h-20 bg-gradient-to-b from-black/20 to-transparent" />
+
+                <video
+                  src={heroPreviewUrl}
+                  autoPlay
+                  muted
+                  loop
+                  playsInline
+                  preload="metadata"
+                  className="aspect-[9/16] h-full w-full object-cover transition duration-700 group-hover:scale-[1.02]"
+                />
+
+                <div className="absolute inset-x-0 bottom-0 h-36 bg-gradient-to-t from-black/80 via-black/25 to-transparent" />
+
+                {heroPreviewProduct ? (
+                  <div className="absolute bottom-4 left-4 right-4 text-white">
+                    <p className="text-[10px] font-medium uppercase tracking-[0.16em] text-white/60">
                       Featured bundle
                     </p>
 
-                    <p className="mt-0.5 truncate font-display text-base font-semibold">
+                    <p className="mt-1 truncate font-display text-base font-semibold">
                       {heroPreviewProduct.name}
                     </p>
 
-                    <p className="mt-1 text-xs text-white/80">
-                      View bundle →
+                    <p className="mt-1 text-xs text-white/75">
+                      View bundle <span aria-hidden="true">→</span>
+                    </p>
+                  </div>
+                ) : (
+                  <div className="absolute bottom-4 left-4 right-4 text-white">
+                    <p className="text-sm font-medium">
+                      See the content before you buy.
+                    </p>
+                    <p className="mt-1 text-xs text-white/70">
+                      Preview a reel bundle
                     </p>
                   </div>
                 )}
-              </Link>
-            </div>
-          )}
+              </div>
+
+              <div className="absolute -bottom-5 -left-5 hidden rounded-2xl border border-border bg-surface/95 px-4 py-3 shadow-panel backdrop-blur sm:block">
+                <div className="flex items-center gap-2">
+                  <div className="flex h-8 w-8 items-center justify-center rounded-full bg-accent/15 text-accent">
+                    <Zap size={15} />
+                  </div>
+
+                  <div>
+                    <p className="text-xs font-medium text-ink">
+                      Instant access
+                    </p>
+                    <p className="text-[11px] text-ink-faint">
+                      After payment clears
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </Link>
+          </div>
+        )}
+      </div>
     </section>
   );
 }
