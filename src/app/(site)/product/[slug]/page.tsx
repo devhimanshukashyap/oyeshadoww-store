@@ -121,7 +121,6 @@ async function ProductDetail({ slug }: { slug: string }) {
                     controlsList="nodownload noplaybackrate"
                     disablePictureInPicture
                     preload="none"
-                    onContextMenu={(event) => event.preventDefault()}
                     poster={
                       product.thumbnailKey
                         ? `/api/media/thumbnail?key=${encodeURIComponent(
