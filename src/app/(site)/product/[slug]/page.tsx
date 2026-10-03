@@ -112,26 +112,40 @@ async function ProductDetail({ slug }: { slug: string }) {
         {/* Preview */}
         <div>
           <div className="sticky top-24 mx-auto max-w-sm">
-            <div className="aspect-[9/16] w-full overflow-hidden rounded-2xl border border-border bg-surface-raised">
+            <div className="relative aspect-[9/16] w-full overflow-hidden rounded-2xl border border-border bg-surface-raised shadow-panel">
               {product.previewVideoKey ? (
-                <video
-                  className="h-full w-full object-cover"
-                  controls
-                  preload="none"
-                  poster={
-                    product.thumbnailKey
-                      ? `/api/media/thumbnail?key=${encodeURIComponent(
-                        product.thumbnailKey
-                      )}`
-                      : undefined
-                  }
-                >
-                  <source
-                    src={`/api/media/preview?key=${encodeURIComponent(
-                      product.previewVideoKey
-                    )}`}
-                  />
-                </video>
+                <>
+                  <video
+                    className="h-full w-full object-cover"
+                    controls
+                    preload="none"
+                    poster={
+                      product.thumbnailKey
+                        ? `/api/media/thumbnail?key=${encodeURIComponent(
+                          product.thumbnailKey
+                        )}`
+                        : undefined
+                    }
+                  >
+                    <source
+                      src={`/api/media/preview?key=${encodeURIComponent(
+                        product.previewVideoKey
+                      )}`}
+                    />
+                  </video>
+
+                  <div className="pointer-events-none absolute inset-x-0 top-0 flex items-center justify-between bg-gradient-to-b from-black/50 to-transparent p-4">
+                    <span className="rounded-full border border-white/20 bg-black/30 px-2.5 py-1 text-[10px] font-medium uppercase tracking-[0.16em] text-white backdrop-blur">
+                      Preview
+                    </span>
+                  </div>
+
+                  <div className="pointer-events-none absolute inset-x-0 bottom-12 bg-gradient-to-t from-black/60 to-transparent px-4 pb-4 pt-10">
+                    <p className="text-xs font-medium text-white/90">
+                      Watch before you buy
+                    </p>
+                  </div>
+                </>
               ) : product.thumbnailKey ? (
                 // eslint-disable-next-line @next/next/no-img-element
                 <img

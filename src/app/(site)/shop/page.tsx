@@ -56,7 +56,7 @@ export default async function ShopPage({
               <Link
                 href="/shop"
                 className="text-xs font-medium text-ink-muted transition-colors hover:text-ink"
-              >
+              > 
                 Clear filter
               </Link>
             )}
