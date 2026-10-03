@@ -34,13 +34,19 @@ export default async function PurchasesPage() {
         ]}
       />
 
-      <h1 className="font-display text-3xl font-semibold text-ink">
-        My Purchases
-      </h1>
+      <div className="mt-8">
+        <p className="text-xs font-semibold uppercase tracking-[0.18em] text-accent">
+          Your library
+        </p>
 
-      <p className="mt-1 text-ink-muted">
-        Everything you&apos;ve bought, ready to download.
-      </p>
+        <h1 className="mt-2 font-display text-3xl font-semibold tracking-tight text-ink sm:text-4xl">
+          My Purchases
+        </h1>
+
+        <p className="mt-2 max-w-xl text-sm leading-relaxed text-ink-muted sm:text-base">
+          Everything you&apos;ve bought, ready whenever you want to download it.
+        </p>
+      </div>
 
       {byProduct.size === 0 ? (
         <div className="mt-10">
@@ -56,7 +62,7 @@ export default async function PurchasesPage() {
           />
         </div>
       ) : (
-        <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="mt-8 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
           {[...byProduct.entries()].map(([productId, list]) => {
             const best = list.find((p) => p.variant === "CLEAN") ?? list[0];
             const hasClean = list.some((p) => p.variant === "CLEAN");
@@ -65,31 +71,69 @@ export default async function PurchasesPage() {
               <Link
                 key={productId}
                 href={`/purchases/${productId}`}
-                className="card block p-4 transition-transform hover:-translate-y-0.5"
+                className="group rounded-card border border-border bg-surface p-5 shadow-sm transition duration-300 hover:-translate-y-1 hover:border-accent/40 hover:shadow-panel focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/50"
               >
-                <p className="font-display text-lg font-semibold text-ink">
-                  {best.product.name}
-                </p>
+                <div className="flex items-start justify-between gap-3">
+                  <div className="min-w-0">
+                    <p className="font-display text-lg font-semibold leading-tight text-ink">
+                      {best.product.name}
+                    </p>
 
-                <p className="mt-1 text-sm text-ink-muted">
-                  {best.product._count.reels} reels ·{" "}
-                  {hasClean ? "Non-watermarked" : "Watermarked"}
-                </p>
+                    <p className="mt-2 text-sm text-ink-muted">
+                      {best.product._count.reels}{" "}
+                      {best.product._count.reels === 1 ? "reel" : "reels"} included
+                    </p>
+                  </div>
 
-                <p className="mt-3 text-xs text-ink-faint">
-                  Purchased {formatDate(best.grantedAt)}
-                </p>
+                  <span
+                    className={
+                      hasClean
+                        ? "shrink-0 rounded-full bg-accent/10 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.12em] text-accent"
+                        : "shrink-0 rounded-full border border-border bg-surface-raised px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.12em] text-ink-muted"
+                    }
+                  >
+                    {hasClean ? "Bundle+" : "Bundle"}
+                  </span>
+                </div>
 
-                <p className="mt-1 text-xs text-ink-faint">
-                  {formatPaise(
-                    best.order.totalAmountPaise,
-                    best.order.currency
-                  )}
-                </p>
+                <div className="mt-5 rounded-xl border border-border bg-surface-raised px-4 py-3">
+                  <div className="flex items-center justify-between gap-3">
+                    <span className="text-xs text-ink-faint">Access</span>
+                    <span className="text-xs font-medium text-ink">
+                      {hasClean ? "Non-watermarked" : "Watermarked"}
+                    </span>
+                  </div>
 
-                <span className="btn-secondary mt-4 w-full">
-                  Open bundle
-                </span>
+                  <div className="mt-2 flex items-center justify-between gap-3">
+                    <span className="text-xs text-ink-faint">Purchased</span>
+                    <span className="text-xs font-medium text-ink">
+                      {formatDate(best.grantedAt)}
+                    </span>
+                  </div>
+
+                  <div className="mt-2 flex items-center justify-between gap-3">
+                    <span className="text-xs text-ink-faint">Paid</span>
+                    <span className="text-xs font-medium text-ink">
+                      {formatPaise(
+                        best.order.totalAmountPaise,
+                        best.order.currency
+                      )}
+                    </span>
+                  </div>
+                </div>
+
+                <div className="mt-5 flex items-center justify-between rounded-xl border border-border px-4 py-3 transition-colors group-hover:border-accent/40 group-hover:bg-accent/5">
+                  <span className="text-sm font-medium text-ink">
+                    Open bundle
+                  </span>
+
+                  <span
+                    aria-hidden="true"
+                    className="text-lg text-ink-muted transition-transform duration-300 group-hover:translate-x-1 group-hover:text-accent"
+                  >
+                    →
+                  </span>
+                </div>
               </Link>
             );
           })}
