@@ -33,6 +33,8 @@ export function ReelList({
   const [previewId, setPreviewId] = useState<string | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [downloadingId, setDownloadingId] = useState<string | null>(null);
+  const [previewError, setPreviewError] = useState<string | null>(null);
+  const [downloadError, setDownloadError] = useState<string | null>(null);
   const [batch, setBatch] = useState<BatchState>({ phase: "idle" });
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
@@ -56,32 +58,53 @@ export function ReelList({
     if (previewId === reelId) {
       setPreviewId(null);
       setPreviewUrl(null);
+      setPreviewError(null);
       return;
     }
+
     setPreviewId(reelId);
     setPreviewUrl(null);
-    const res = await fetch("/api/download/reel", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ reelId, variant, intent: "preview" }),
-    });
-    const data = await res.json();
-    if (res.ok) setPreviewUrl(data.url);
+    setPreviewError(null);
+
+    try {
+      const res = await fetch("/api/download/reel", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ reelId, variant, intent: "preview" }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok || !data.url) {
+        throw new Error(data.error ?? "Preview unavailable");
+      }
+
+      setPreviewUrl(data.url);
+    } catch {
+      setPreviewError("Preview unavailable. Please try again.");
+    }
   }
 
   async function handleDownload(reelId: string) {
     setDownloadingId(reelId);
+    setDownloadError(null);
+
     try {
       const res = await fetch("/api/download/reel", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ reelId, variant, intent: "download" }),
       });
+
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error ?? "Download failed");
+
+      if (!res.ok || !data.url) {
+        throw new Error(data.error ?? "Download failed");
+      }
+
       window.location.href = data.url;
     } catch {
-      // swallow — UI stays as-is, user can retry
+      setDownloadError("Download failed. Please try again.");
     } finally {
       setDownloadingId(null);
     }
@@ -148,7 +171,16 @@ export function ReelList({
         </button>
       </div>
 
-      <BatchStatusBanner batch={batch} onDismiss={() => setBatch({ phase: "idle" })} />
+      <BatchStatusBanner
+        batch={batch}
+        onDismiss={() => setBatch({ phase: "idle" })}
+      />
+
+      {downloadError && (
+        <div className="mb-4 rounded-card border border-danger/40 bg-danger/10 px-4 py-3 text-sm text-danger">
+          {downloadError}
+        </div>
+      )}
 
       <ul className="space-y-2">
         {reels.map((reel) => (
@@ -198,7 +230,16 @@ export function ReelList({
             {previewId === reel.id && (
               <div className="mt-3 aspect-[9/16] max-w-[220px] overflow-hidden rounded-lg bg-black">
                 {previewUrl ? (
-                  <video src={previewUrl} controls autoPlay className="h-full w-full object-contain" />
+                  <video
+                    src={previewUrl}
+                    controls
+                    autoPlay
+                    className="h-full w-full object-contain"
+                  />
+                ) : previewError ? (
+                  <div className="flex h-full items-center justify-center p-4 text-center text-xs text-white/70">
+                    {previewError}
+                  </div>
                 ) : (
                   <div className="flex h-full w-full items-center justify-center text-ink-faint">
                     <Loader2 size={20} className="animate-spin" />
