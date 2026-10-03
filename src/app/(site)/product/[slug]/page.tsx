@@ -64,6 +64,14 @@ async function ProductDetail({ slug }: { slug: string }) {
 
   const licenseText = product.licenseText || settings.defaultLicenseText;
 
+  const hasBundle = product.reels.some(
+    (reel) => reel.watermarkedObjectId !== null,
+  );
+
+  const hasBundlePlus = product.reels.some(
+    (reel) => reel.cleanObjectId !== null,
+  );
+
   const jsonLd = {
     "@context": "https://schema.org",
     "@type": "Product",
@@ -164,7 +172,7 @@ async function ProductDetail({ slug }: { slug: string }) {
 
           {/* Purchase options */}
           <div className="mt-6 space-y-3">
-            {product.watermarkedPriceInPaise != null && (
+            {hasBundle && product.watermarkedPriceInPaise != null && (
               <PricingRow
                 slug={product.slug}
                 variant="WATERMARKED"
@@ -179,7 +187,7 @@ async function ProductDetail({ slug }: { slug: string }) {
               />
             )}
 
-            {product.cleanPriceInPaise != null && (
+            {hasBundlePlus && product.cleanPriceInPaise != null && (
               <PricingRow
                 slug={product.slug}
                 variant="CLEAN"
@@ -195,27 +203,28 @@ async function ProductDetail({ slug }: { slug: string }) {
               />
             )}
           </div>
+          {hasBundlePlus && (
+            <div className="mt-5 rounded-card border border-border bg-surface-raised p-4">
+              <p className="text-sm font-medium text-ink">
+                Why choose Bundle+?
+              </p>
 
-          <div className="mt-5 rounded-card border border-border bg-surface-raised p-4">
-            <p className="text-sm font-medium text-ink">
-              Why choose Bundle+?
-            </p>
-
-            <ul className="mt-2 space-y-1.5 text-sm text-ink-muted">
-              <li className="flex items-start gap-2">
-                <Check size={14} className="mt-0.5 shrink-0 text-success" />
-                Non-watermarked, clean reels
-              </li>
-              <li className="flex items-start gap-2">
-                <Check size={14} className="mt-0.5 shrink-0 text-success" />
-                Premium extras when available
-              </li>
-              <li className="flex items-start gap-2">
-                <Check size={14} className="mt-0.5 shrink-0 text-success" />
-                Future Bundle+ updates
-              </li>
-            </ul>
-          </div>
+              <ul className="mt-2 space-y-1.5 text-sm text-ink-muted">
+                <li className="flex items-start gap-2">
+                  <Check size={14} className="mt-0.5 shrink-0 text-success" />
+                  Non-watermarked, clean reels
+                </li>
+                <li className="flex items-start gap-2">
+                  <Check size={14} className="mt-0.5 shrink-0 text-success" />
+                  Premium extras when available
+                </li>
+                <li className="flex items-start gap-2">
+                  <Check size={14} className="mt-0.5 shrink-0 text-success" />
+                  Future Bundle+ updates
+                </li>
+              </ul>
+            </div>
+          )}
 
           <div className="mt-6 flex items-center gap-2 text-xs text-ink-faint">
             <ShieldCheck size={14} />
