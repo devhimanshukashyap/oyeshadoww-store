@@ -3,7 +3,13 @@ import { z } from "zod";
 import { requireAdmin } from "@/lib/session";
 import { apiError } from "@/lib/api-error";
 import { db } from "@/lib/db";
-import { objectExists } from "@/lib/r2";
+import {
+  buildProductAssetKey,
+  getObjectBuffer,
+  objectExists,
+  putObjectBuffer,
+} from "@/lib/r2";
+import sharp from "sharp";
 import { logAdminAction } from "@/server/services/audit.service";
 
 const completeSchema = z.object({
@@ -73,13 +79,50 @@ export async function POST(req: NextRequest) {
     }
 
     if (body.kind === "thumbnail" || body.kind === "preview") {
-      await db.product.update({
-        where: { id: body.productId },
-        data:
-          body.kind === "thumbnail"
-            ? { thumbnailKey: storageObject.key }
-            : { previewVideoKey: storageObject.key },
-      });
+      if (!body.productId) {
+        return NextResponse.json(
+          { error: "Product ID is required." },
+          { status: 400 },
+        );
+      }
+
+      if (body.kind === "thumbnail") {
+        const source = await getObjectBuffer(storageObject.key);
+
+        const optimizedThumbnail = await sharp(source.body)
+          .rotate()
+          .resize({
+            width: 640,
+            withoutEnlargement: true,
+          })
+          .webp({
+            quality: 82,
+            effort: 4,
+          })
+          .toBuffer();
+
+        const optimizedKey = buildProductAssetKey(
+          body.productId,
+          "thumbnail",
+          "optimized.webp",
+        );
+
+        await putObjectBuffer({
+          key: optimizedKey,
+          body: optimizedThumbnail,
+          contentType: "image/webp",
+        });
+
+        await db.product.update({
+          where: { id: body.productId },
+          data: { thumbnailKey: optimizedKey },
+        });
+      } else {
+        await db.product.update({
+          where: { id: body.productId },
+          data: { previewVideoKey: storageObject.key },
+        });
+      }
 
       await logAdminAction({
         adminId: admin.id,
